@@ -50,63 +50,24 @@ export default function App() {
   const [page, setPage] = useState("anxios");
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#f6f3ee",
-        padding: "18px 14px 32px",
-        color: "#2d2a26",
-        maxWidth: "560px",
-        margin: "0 auto",
-        fontFamily: "Georgia, serif"
-      }}
-    >
-      <div style={{ textAlign: "center", marginBottom: "18px" }}>
-        <div style={{ fontSize: "22px", marginBottom: "6px" }}>🔴🌿</div>
-        <div style={{ fontSize: "24px", fontWeight: "bold" }}>
-          Calendar Postari 2026
-        </div>
-        <div style={{ fontSize: "12px", color: "#9b978f", marginTop: "4px" }}>
-        tracking separat pe nise
-  </div>
-</div>
+    <div className="app-shell">
+      <div className="top-header">
+        <div className="top-icon">🔴🌿</div>
+        <div className="top-title">Calendar Postari 2026</div>
+        <div className="top-subtitle">tracking separat pe nise</div>
+      </div>
 
-<div
-  style={{
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "10px",
-    marginBottom: "16px"
-  }}
->  
+      <div className="tabs">
         <button
           onClick={() => setPage("anxios")}
-          style={{
-            padding: "13px 10px",
-            borderRadius: "14px",
-            border: "none",
-            background: page === "anxios" ? "#2d2a26" : "#e9e3da",
-            color: page === "anxios" ? "#fff" : "#2d2a26",
-            fontSize: "15px",
-            fontWeight: "bold",
-            cursor: "pointer"
-          }}
+          className={page === "anxios" ? "tab active" : "tab"}
         >
           🔴 Anxios & Evitant
         </button>
 
         <button
           onClick={() => setPage("reset")}
-          style={{
-            padding: "13px 10px",
-            borderRadius: "14px",
-            border: "none",
-            background: page === "reset" ? "#2d2a26" : "#e9e3da",
-            color: page === "reset" ? "#fff" : "#2d2a26",
-            fontSize: "15px",
-            fontWeight: "bold",
-            cursor: "pointer"
-          }}
+          className={page === "reset" ? "tab active" : "tab"}
         >
           🌿 Reset Bland
         </button>
@@ -266,67 +227,30 @@ function CalendarPage({ page, title, subtitle }) {
 
   const weakHook = dropValue === "0:01";
 
-  const cardStyle = {
-    background: "#ffffff",
-    borderRadius: "18px",
-    boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
-    padding: "16px"
-  };
-
-  const inputStyle = {
-    width: "100%",
-    padding: "12px 14px",
-    borderRadius: "14px",
-    border: "1px solid #ddd7cf",
-    background: "#fafaf8",
-    fontSize: "14px",
-    fontFamily: "inherit",
-    boxSizing: "border-box"
-  };
-
-  const labelStyle = {
-    fontSize: "12px",
-    color: "#8c8c8c",
-    marginBottom: "6px"
-  };
-
   return (
     <>
-      <div style={{ textAlign: "center", marginBottom: "14px" }}>
-        <div style={{ fontSize: "20px", fontWeight: "bold" }}>{title}</div>
-        <div style={{ fontSize: "12px", color: "#9b978f", marginTop: "4px" }}>
-          {subtitle}
+      <div className="page-head">
+        <div className="page-title">{title}</div>
+        <div className="page-subtitle">{subtitle}</div>
+      </div>
+
+      <div className="stats-grid">
+        <div className="card stat-card">
+          <div className="mini-label">Streak</div>
+          <div className="big-stat">{streak}</div>
+        </div>
+
+        <div className="card stat-card">
+          <div className="mini-label">Progress</div>
+          <div className="big-stat">{progress}%</div>
+          <div className="progress-track">
+            <div className="progress-fill" style={{ width: `${progress}%` }} />
+          </div>
         </div>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "10px",
-          marginBottom: "14px"
-        }}
-      >
-        <div style={cardStyle}>
-          <div style={{ fontSize: "12px", color: "#8c8c8c" }}>Streak</div>
-          <div style={{ fontSize: "28px", marginTop: "4px" }}>{streak}</div>
-        </div>
-
-        <div style={cardStyle}>
-          <div style={{ fontSize: "12px", color: "#8c8c8c" }}>Progress</div>
-          <div style={{ fontSize: "28px", marginTop: "4px" }}>{progress}%</div>
-        </div>
-      </div>
-
-      <div style={{ ...cardStyle, marginBottom: "14px" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "12px"
-          }}
-        >
+      <div className="card calendar-card">
+        <div className="month-nav">
           <button
             onClick={() => {
               const next = Math.max(0, currentMonth - 1);
@@ -334,20 +258,12 @@ function CalendarPage({ page, title, subtitle }) {
               setSelectedDay(null);
               persist({ currentMonth: next, selectedDay: null });
             }}
-            style={{
-              border: "none",
-              background: "#f1ece5",
-              width: "36px",
-              height: "36px",
-              borderRadius: "50%",
-              fontSize: "20px",
-              cursor: "pointer"
-            }}
+            className="nav-btn"
           >
             ‹
           </button>
 
-          <div style={{ fontSize: "18px", fontWeight: "bold" }}>
+          <div className="month-title">
             {months[currentMonth]} {year}
           </div>
 
@@ -358,50 +274,21 @@ function CalendarPage({ page, title, subtitle }) {
               setSelectedDay(null);
               persist({ currentMonth: next, selectedDay: null });
             }}
-            style={{
-              border: "none",
-              background: "#f1ece5",
-              width: "36px",
-              height: "36px",
-              borderRadius: "50%",
-              fontSize: "20px",
-              cursor: "pointer"
-            }}
+            className="nav-btn"
           >
             ›
           </button>
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(7, 1fr)",
-            gap: "6px",
-            marginBottom: "8px"
-          }}
-        >
+        <div className="days-row">
           {dayNames.map((d) => (
-            <div
-              key={d}
-              style={{
-                textAlign: "center",
-                fontSize: "12px",
-                color: "#9b978f",
-                padding: "4px 0"
-              }}
-            >
+            <div key={d} className="day-name">
               {d}
             </div>
           ))}
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(7, 1fr)",
-            gap: "6px"
-          }}
-        >
+        <div className="calendar-grid">
           {Array(firstDay)
             .fill(null)
             .map((_, i) => (
@@ -418,45 +305,15 @@ function CalendarPage({ page, title, subtitle }) {
               <button
                 key={day}
                 onClick={() => selectDay(day)}
-                style={{
-                  aspectRatio: "1",
-                  borderRadius: "14px",
-                  border: isSelected ? "none" : "1px solid #ebe4da",
-                  background: isSelected
-                    ? "#2d2a26"
-                    : weekend
-                    ? "#f3eee7"
-                    : "#ffffff",
-                  color: isSelected ? "#ffffff" : "#2d2a26",
-                  cursor: "pointer",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  padding: "0"
-                }}
+                className={`day-cell ${isSelected ? "selected" : ""} ${
+                  weekend ? "weekend" : ""
+                }`}
               >
-                <div style={{ fontSize: "14px", fontWeight: "bold" }}>{day}</div>
+                <div className="day-number">{day}</div>
                 {any && (
-                  <div style={{ display: "flex", gap: "4px", marginTop: "4px" }}>
-                    <span
-                      style={{
-                        width: "6px",
-                        height: "6px",
-                        borderRadius: "50%",
-                        background: ig ? "#e8a598" : "#e5ddd3",
-                        display: "inline-block"
-                      }}
-                    />
-                    <span
-                      style={{
-                        width: "6px",
-                        height: "6px",
-                        borderRadius: "50%",
-                        background: tt ? "#a8c4d4" : "#e5ddd3",
-                        display: "inline-block"
-                      }}
-                    />
+                  <div className="dots">
+                    <span className={`dot ${ig ? "ig-on" : ""}`} />
+                    <span className={`dot ${tt ? "tt-on" : ""}`} />
                   </div>
                 )}
               </button>
@@ -466,345 +323,216 @@ function CalendarPage({ page, title, subtitle }) {
       </div>
 
       {selectedDay && (
-        <div style={cardStyle}>
-          <div style={{ marginBottom: "14px" }}>
-            <div style={{ fontSize: "12px", color: "#8c8c8c" }}>
+        <div className="card details-card">
+          <div className="date-block">
+            <div className="mini-label">
               {getDayName(currentMonth, selectedDay, year)}
             </div>
-            <div style={{ fontSize: "22px", fontWeight: "bold", marginTop: "3px" }}>
+            <div className="date-title">
               {selectedDay} {months[currentMonth]} {year}
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: "8px", marginBottom: "14px", flexWrap: "wrap" }}>
-            {isWinner && (
-              <span
-                style={{
-                  background: "#dff3e4",
-                  color: "#246b45",
-                  fontSize: "12px",
-                  padding: "6px 10px",
-                  borderRadius: "999px",
-                  fontWeight: "bold"
-                }}
-              >
-                WINNER
-              </span>
-            )}
-
-            {weakHook && (
-              <span
-                style={{
-                  background: "#fde7e7",
-                  color: "#a33a3a",
-                  fontSize: "12px",
-                  padding: "6px 10px",
-                  borderRadius: "999px",
-                  fontWeight: "bold"
-                }}
-              >
-                HOOK SLAB
-              </span>
-            )}
-
-            <span
-              style={{
-                background: "#efe8ff",
-                color: "#5d3ea8",
-                fontSize: "12px",
-                padding: "6px 10px",
-                borderRadius: "999px",
-                fontWeight: "bold"
-              }}
-            >
-              SCOR {score}
-            </span>
+          <div className="badges">
+            {isWinner && <span className="badge badge-winner">WINNER</span>}
+            {weakHook && <span className="badge badge-weak">HOOK SLAB</span>}
+            <span className="badge badge-score">SCOR {score}</span>
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gap: "10px",
-              marginBottom: "14px"
-            }}
-          >
-            <div
-              style={{
-                background: "#fafaf8",
-                borderRadius: "16px",
-                padding: "12px 14px",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center"
-              }}
-            >
+          <div className="platform-boxes">
+            <div className="platform-box">
               <div>
-                <div style={{ fontSize: "12px", color: "#8c8c8c" }}>📸 Instagram</div>
-                <div style={{ fontSize: "22px", marginTop: "2px" }}>
+                <div className="mini-label">📸 Instagram</div>
+                <div className="time-value">
                   {getPostingTime(currentMonth, selectedDay).insta}
                 </div>
               </div>
 
               <button
                 onClick={() => togglePosted("insta")}
-                style={{
-                  width: "42px",
-                  height: "42px",
-                  borderRadius: "50%",
-                  border: "2px solid #e8a598",
-                  background: posted[platformKey(currentMonth, selectedDay, "insta")]
-                    ? "#e8a598"
-                    : "transparent",
-                  color: "#fff",
-                  cursor: "pointer",
-                  fontWeight: "bold"
-                }}
+                className={`toggle-circle insta ${
+                  posted[platformKey(currentMonth, selectedDay, "insta")] ? "on" : ""
+                }`}
               >
                 {posted[platformKey(currentMonth, selectedDay, "insta")] ? "✓" : ""}
               </button>
             </div>
 
-            <div
-              style={{
-                background: "#fafaf8",
-                borderRadius: "16px",
-                padding: "12px 14px",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center"
-              }}
-            >
+            <div className="platform-box">
               <div>
-                <div style={{ fontSize: "12px", color: "#8c8c8c" }}>🎵 TikTok</div>
-                <div style={{ fontSize: "22px", marginTop: "2px" }}>
+                <div className="mini-label">🎵 TikTok</div>
+                <div className="time-value">
                   {getPostingTime(currentMonth, selectedDay).tiktok}
                 </div>
               </div>
 
               <button
                 onClick={() => togglePosted("tiktok")}
-                style={{
-                  width: "42px",
-                  height: "42px",
-                  borderRadius: "50%",
-                  border: "2px solid #a8c4d4",
-                  background: posted[platformKey(currentMonth, selectedDay, "tiktok")]
-                    ? "#a8c4d4"
-                    : "transparent",
-                  color: "#fff",
-                  cursor: "pointer",
-                  fontWeight: "bold"
-                }}
+                className={`toggle-circle tiktok ${
+                  posted[platformKey(currentMonth, selectedDay, "tiktok")] ? "on" : ""
+                }`}
               >
                 {posted[platformKey(currentMonth, selectedDay, "tiktok")] ? "✓" : ""}
               </button>
             </div>
           </div>
 
-          <div style={{ marginBottom: "12px" }}>
-            <div style={labelStyle}>Comenzi</div>
+          <div className="field-block">
+            <div className="mini-label">Comenzi</div>
             <input
-              style={inputStyle}
+              className="field"
               value={currentNote.commands || ""}
               onChange={(e) => updateDailyNote("commands", e.target.value)}
               placeholder={page === "anxios" ? "tt v3, tt v4" : "ig rb1, tt rb1"}
             />
           </div>
 
-          <div style={{ marginBottom: "14px" }}>
-            <div style={labelStyle}>Log</div>
+          <div className="field-block">
+            <div className="mini-label">Log</div>
             <textarea
-              style={{ ...inputStyle, minHeight: "100px", resize: "vertical" }}
+              className="field textarea"
               value={currentNote.log || ""}
               onChange={(e) => updateDailyNote("log", e.target.value)}
               placeholder={
                 page === "anxios"
-                  ? "VIDEO 3\n2404 views | 5.2 sec | 52% retentie..."
+                  ? "VIDEO 3&#10;2404 views | 5.2 sec | 52% retentie..."
                   : "video calm, hook bland, salvari bune..."
               }
             />
           </div>
 
-          <div style={{ marginBottom: "12px" }}>
-            <div style={labelStyle}>VIDEO nr</div>
+          <div className="field-block">
+            <div className="mini-label">VIDEO nr</div>
             <input
-              style={inputStyle}
+              className="field"
               value={currentLog.videoNr || ""}
               onChange={(e) => updateVideoLog("videoNr", e.target.value)}
               placeholder="3 / 4"
             />
           </div>
 
-          <div style={{ marginBottom: "12px" }}>
-            <div style={labelStyle}>Cadre</div>
+          <div className="field-block">
+            <div className="mini-label">Cadre</div>
             <textarea
-              style={{ ...inputStyle, minHeight: "120px", resize: "vertical" }}
+              className="field textarea large"
               value={currentLog.frames || ""}
               onChange={(e) => updateVideoLog("frames", e.target.value)}
               placeholder="VIDEO 1: ..."
             />
           </div>
 
-          <div style={{ marginBottom: "12px" }}>
-            <div style={labelStyle}>Caption</div>
+          <div className="field-block">
+            <div className="mini-label">Caption</div>
             <textarea
-              style={{ ...inputStyle, minHeight: "90px", resize: "vertical" }}
+              className="field textarea"
               value={currentLog.caption || ""}
               onChange={(e) => updateVideoLog("caption", e.target.value)}
               placeholder="caption video"
             />
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "10px",
-              marginBottom: "14px"
-            }}
-          >
-            <div>
-              <div style={labelStyle}>Durata</div>
-              <input
-                style={inputStyle}
-                value={currentLog.duration || ""}
-                onChange={(e) => updateVideoLog("duration", e.target.value)}
-                placeholder="9.98 / 13.01"
-              />
-            </div>
-
-            <div>
-              <div style={labelStyle}>Vizualizari</div>
-              <input
-                style={inputStyle}
-                value={currentLog.views || ""}
-                onChange={(e) => updateVideoLog("views", e.target.value)}
-                placeholder="2404 / 518"
-              />
-            </div>
-
-            <div>
-              <div style={labelStyle}>Timp mediu</div>
-              <input
-                style={inputStyle}
-                value={currentLog.avgTime || ""}
-                onChange={(e) => updateVideoLog("avgTime", e.target.value)}
-                placeholder="5.2 / 3.8"
-              />
-            </div>
-
-            <div>
-              <div style={labelStyle}>Completari</div>
-              <input
-                style={inputStyle}
-                value={currentLog.completions || ""}
-                onChange={(e) => updateVideoLog("completions", e.target.value)}
-                placeholder="14.45 / 4.22"
-              />
-            </div>
-
-            <div>
-              <div style={labelStyle}>Retentie</div>
-              <input
-                style={inputStyle}
-                value={currentLog.retention || ""}
-                onChange={(e) => updateVideoLog("retention", e.target.value)}
-                placeholder="52 / 29"
-              />
-            </div>
-
-            <div>
-              <div style={labelStyle}>Urmatori noi</div>
-              <input
-                style={inputStyle}
-                value={currentLog.newFollowers || ""}
-                onChange={(e) => updateVideoLog("newFollowers", e.target.value)}
-                placeholder="11 / 0"
-              />
-            </div>
-
-            <div>
-              <div style={labelStyle}>Aprecieri</div>
-              <input
-                style={inputStyle}
-                value={currentLog.likes || ""}
-                onChange={(e) => updateVideoLog("likes", e.target.value)}
-                placeholder="23"
-              />
-            </div>
-
-            <div>
-              <div style={labelStyle}>Distribuiri</div>
-              <input
-                style={inputStyle}
-                value={currentLog.shares || ""}
-                onChange={(e) => updateVideoLog("shares", e.target.value)}
-                placeholder="-"
-              />
-            </div>
-
-            <div>
-              <div style={labelStyle}>Comentarii</div>
-              <input
-                style={inputStyle}
-                value={currentLog.comments || ""}
-                onChange={(e) => updateVideoLog("comments", e.target.value)}
-                placeholder="1"
-              />
-            </div>
-
-            <div>
-              <div style={labelStyle}>Salvari</div>
-              <input
-                style={inputStyle}
-                value={currentLog.saves || ""}
-                onChange={(e) => updateVideoLog("saves", e.target.value)}
-                placeholder="8"
-              />
-            </div>
-
-            <div>
-              <div style={labelStyle}>Drop la</div>
-              <input
-                style={inputStyle}
-                value={currentLog.dropAt || ""}
-                onChange={(e) => updateVideoLog("dropAt", e.target.value)}
-                placeholder="0:01"
-              />
-            </div>
-
-            <div>
-              <div style={labelStyle}>Eligibil</div>
-              <input
-                style={inputStyle}
-                value={currentLog.eligible || ""}
-                onChange={(e) => updateVideoLog("eligible", e.target.value)}
-                placeholder="da / nu"
-              />
-            </div>
-
-            <div>
-              <div style={labelStyle}>Ora postarii</div>
-              <input
-                style={inputStyle}
-                value={currentLog.postTime || ""}
-                onChange={(e) => updateVideoLog("postTime", e.target.value)}
-                placeholder="15:36"
-              />
-            </div>
-
-            <div>
-              <div style={labelStyle}>Reactii la 0:00</div>
-              <input
-                style={inputStyle}
-                value={currentLog.zeroSecondReaction || ""}
-                onChange={(e) => updateVideoLog("zeroSecondReaction", e.target.value)}
-                placeholder="71%"
-              />
-            </div>
+          <div className="metrics-grid">
+            <MetricField
+              label="Durata"
+              value={currentLog.duration || ""}
+              onChange={(v) => updateVideoLog("duration", v)}
+              placeholder="9.98 / 13.01"
+            />
+            <MetricField
+              label="Vizualizari"
+              value={currentLog.views || ""}
+              onChange={(v) => updateVideoLog("views", v)}
+              placeholder="2404 / 518"
+            />
+            <MetricField
+              label="Timp mediu"
+              value={currentLog.avgTime || ""}
+              onChange={(v) => updateVideoLog("avgTime", v)}
+              placeholder="5.2 / 3.8"
+            />
+            <MetricField
+              label="Completari"
+              value={currentLog.completions || ""}
+              onChange={(v) => updateVideoLog("completions", v)}
+              placeholder="14.45 / 4.22"
+            />
+            <MetricField
+              label="Retentie"
+              value={currentLog.retention || ""}
+              onChange={(v) => updateVideoLog("retention", v)}
+              placeholder="52 / 29"
+            />
+            <MetricField
+              label="Urmatori noi"
+              value={currentLog.newFollowers || ""}
+              onChange={(v) => updateVideoLog("newFollowers", v)}
+              placeholder="11 / 0"
+            />
+            <MetricField
+              label="Aprecieri"
+              value={currentLog.likes || ""}
+              onChange={(v) => updateVideoLog("likes", v)}
+              placeholder="23"
+            />
+            <MetricField
+              label="Distribuiri"
+              value={currentLog.shares || ""}
+              onChange={(v) => updateVideoLog("shares", v)}
+              placeholder="-"
+            />
+            <MetricField
+              label="Comentarii"
+              value={currentLog.comments || ""}
+              onChange={(v) => updateVideoLog("comments", v)}
+              placeholder="1"
+            />
+            <MetricField
+              label="Salvari"
+              value={currentLog.saves || ""}
+              onChange={(v) => updateVideoLog("saves", v)}
+              placeholder="8"
+            />
+            <MetricField
+              label="Drop la"
+              value={currentLog.dropAt || ""}
+              onChange={(v) => updateVideoLog("dropAt", v)}
+              placeholder="0:01"
+            />
+            <MetricField
+              label="Eligibil"
+              value={currentLog.eligible || ""}
+              onChange={(v) => updateVideoLog("eligible", v)}
+              placeholder="da / nu"
+            />
+            <MetricField
+              label="Ora postarii"
+              value={currentLog.postTime || ""}
+              onChange={(v) => updateVideoLog("postTime", v)}
+              placeholder="15:36"
+            />
+            <MetricField
+              label="Reactii la 0:00"
+              value={currentLog.zeroSecondReaction || ""}
+              onChange={(v) => updateVideoLog("zeroSecondReaction", v)}
+              placeholder="71%"
+            />
           </div>
         </div>
       )}
     </>
   );
-                    }
+}
+
+function MetricField({ label, value, onChange, placeholder }) {
+  return (
+    <div className="metric-field">
+      <div className="mini-label">{label}</div>
+      <input
+        className="field"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+      />
+    </div>
+  );
+            }
