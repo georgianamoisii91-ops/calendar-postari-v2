@@ -89,14 +89,22 @@ export default function App() {
 function CalendarPage({ page, title, subtitle }) {
   const year = 2026;
 
-  const initial = safeLoad(page, year);
+  
 
 const [currentMonth, setCurrentMonth] = useState(initial?.currentMonth ?? 2);
 const [selectedDay, setSelectedDay] = useState(initial?.selectedDay ?? 27);
 const [posted, setPosted] = useState(initial?.posted ?? {});
 const [dailyNotes, setDailyNotes] = useState(initial?.dailyNotes ?? {});
 const [videoLogs, setVideoLogs] = useState(initial?.videoLogs ?? {});
+useEffect(() => {
+  const saved = safeLoad(page, year);
 
+  setCurrentMonth(saved?.currentMonth ?? 2);
+  setSelectedDay(saved?.selectedDay ?? 27);
+  setPosted(saved?.posted ?? {});
+  setDailyNotes(saved?.dailyNotes ?? {});
+  setVideoLogs(saved?.videoLogs ?? {});
+}, [page]);
   useEffect(() => {
     try {
       const data = {
