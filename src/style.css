@@ -1,6 +1,12 @@
 body {
   margin: 0;
-  background: #fafaf8;
+  font-family: Georgia, serif;
+  background: #f6f3ee;
+  color: #2d2a26;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 button,
@@ -9,6 +15,19 @@ textarea {
   font-family: inherit;
 }
 
-* {
-  box-sizing: border-box;
+input,
+textarea {
+  outline: none;
+}
+
+button {
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  opacity: 0.95;
+}
+
+button:active {
+  transform: scale(0.98);
 }
