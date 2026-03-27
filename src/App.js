@@ -90,12 +90,18 @@ function CalendarPage({ page, title, subtitle }) {
   const year = 2026;
 
   
+const [currentMonth, setCurrentMonth] = useState(2);
+const [selectedDay, setSelectedDay] = useState(27);
+const [posted, setPosted] = useState({});
+const [dailyNotes, setDailyNotes] = useState({});
+const [videoLogs, setVideoLogs] = useState({});
 
-const [currentMonth, setCurrentMonth] = useState(initial?.currentMonth ?? 2);
-const [selectedDay, setSelectedDay] = useState(initial?.selectedDay ?? 27);
-const [posted, setPosted] = useState(initial?.posted ?? {});
-const [dailyNotes, setDailyNotes] = useState(initial?.dailyNotes ?? {});
-const [videoLogs, setVideoLogs] = useState(initial?.videoLogs ?? {});
+useEffect(() => {
+const [currentMonth, setCurrentMonth] = useState(2);
+const [selectedDay, setSelectedDay] = useState(27);
+const [posted, setPosted] = useState({});
+const [dailyNotes, setDailyNotes] = useState({});
+const [videoLogs, setVideoLogs] = useState({});
 useEffect(() => {
   const saved = safeLoad(page, year);
 
