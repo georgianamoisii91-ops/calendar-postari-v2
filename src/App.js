@@ -78,6 +78,7 @@ export default function App() {
       </div>
 
       <CalendarPage
+        key={page}
         page={page}
         title={page === "anxios" ? "Anxios & Evitant" : "Reset Bland"}
         subtitle={page === "anxios" ? "anxios.si.evitant" : "reset.bland"}
@@ -88,29 +89,18 @@ export default function App() {
 
 function CalendarPage({ page, title, subtitle }) {
   const year = 2026;
+  const initialSaved = safeLoad(page, year);
 
-  
-const [currentMonth, setCurrentMonth] = useState(2);
-const [selectedDay, setSelectedDay] = useState(27);
-const [posted, setPosted] = useState({});
-const [dailyNotes, setDailyNotes] = useState({});
-const [videoLogs, setVideoLogs] = useState({});
+  const [currentMonth, setCurrentMonth] = useState(
+    initialSaved?.currentMonth ?? 2
+  );
+  const [selectedDay, setSelectedDay] = useState(
+    initialSaved?.selectedDay ?? 27
+  );
+  const [posted, setPosted] = useState(initialSaved?.posted ?? {});
+  const [dailyNotes, setDailyNotes] = useState(initialSaved?.dailyNotes ?? {});
+  const [videoLogs, setVideoLogs] = useState(initialSaved?.videoLogs ?? {});
 
-useEffect(() => {
-const [currentMonth, setCurrentMonth] = useState(2);
-const [selectedDay, setSelectedDay] = useState(27);
-const [posted, setPosted] = useState({});
-const [dailyNotes, setDailyNotes] = useState({});
-const [videoLogs, setVideoLogs] = useState({});
-useEffect(() => {
-  const saved = safeLoad(page, year);
-
-  setCurrentMonth(saved?.currentMonth ?? 2);
-  setSelectedDay(saved?.selectedDay ?? 27);
-  setPosted(saved?.posted ?? {});
-  setDailyNotes(saved?.dailyNotes ?? {});
-  setVideoLogs(saved?.videoLogs ?? {});
-}, [page]);
   useEffect(() => {
     try {
       const data = {
@@ -591,4 +581,4 @@ function MetricField({ label, value, onChange, placeholder }) {
       />
     </div>
   );
-    }
+          }
