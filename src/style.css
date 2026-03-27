@@ -1,0 +1,14 @@
+body {
+  margin: 0;
+  background: #fafaf8;
+}
+
+button,
+input,
+textarea {
+  font-family: inherit;
+}
+
+* {
+  box-sizing: border-box;
+}
