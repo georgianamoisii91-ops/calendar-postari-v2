@@ -351,10 +351,35 @@ function CalendarPage({ page, title, subtitle }) {
           </div>
 
           <div className="badges">
+              <div style={{ marginTop: "10px", fontWeight: "bold" }}>
+  {score >= 4 && "Repeta stilul – asta functioneaza"}
+  {score >= 2 && score < 4 && "Optimizeaza hook-ul"}
+  {score < 2 && "Nu repeta – schimba abordarea"}
+</div>
             {isWinner && <span className="badge badge-winner">WINNER</span>}
             {weakHook && <span className="badge badge-weak">HOOK SLAB</span>}
             <span className="badge badge-score">SCOR {score}</span>
+              <span className="badge">
+  {score >= 4 ? "Repeta stilul" : score >= 2 ? "Optimizeaza hook" : "Nu repeta"}
+</span>
           </div>
+              <div
+  style={{
+    marginTop: "10px",
+    fontWeight: "bold",
+    padding: "10px 12px",
+    borderRadius: "12px",
+    background:
+      score >= 4 ? "#e4f3e8" : score >= 2 ? "#fff3df" : "#fdeaea",
+    color:
+      score >= 4 ? "#2f6b42" : score >= 2 ? "#9a6a1b" : "#a04646"
+  }}
+>
+  {score >= 4 && "Repeta stilul – asta functioneaza"}
+  {score >= 2 && score < 4 && "Optimizeaza hook-ul"}
+  {score < 2 && "Nu repeta – schimba abordarea"}
+</div>
+            
 
           <div className="platform-boxes">
             <div className="platform-box">
