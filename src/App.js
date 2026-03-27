@@ -38,7 +38,7 @@ function getDayName(month, day, year) {
 }
 
 function storageKey(page, year) {
-  return `calendar-${page}-${year}`;
+  return `calendar-${year}-${page}`;
 }
 
 function safeLoad(page, year) {
