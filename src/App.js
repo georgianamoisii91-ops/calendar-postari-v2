@@ -243,6 +243,22 @@ function CalendarPage({ page, title, subtitle }) {
 
   const weakHook = dropValue === "0:01";
 
+  let verdict = "";
+  if (score >= 4) verdict = "Repeta stilul – asta functioneaza";
+  else if (score >= 2) verdict = "Optimizeaza hook-ul";
+  else verdict = "Nu repeta – schimba abordarea";
+
+  let diagnostic = "";
+  if (weakHook) {
+    diagnostic = "Problema: Hook slab (pierdere in primele secunde)";
+  } else if (!isNaN(savesValue) && savesValue < 3) {
+    diagnostic = "Problema: Continutul nu genereaza salvari";
+  } else if (!isNaN(retentionValue) && retentionValue < 30) {
+    diagnostic = "Problema: Retentie scazuta (nu tine atentia)";
+  } else if (score >= 4) {
+    diagnostic = "Format validat – merita repetat";
+  }
+
   return (
     <>
       <div className="page-head">
@@ -351,47 +367,37 @@ function CalendarPage({ page, title, subtitle }) {
           </div>
 
           <div className="badges">
-              {isWinner && ...}
-  {weakHook && ...}
-  <span className="badge badge-score">SCOR {score}</span>
-</div>
-            {isWinner
-
-              
+            {isWinner && <span className="badge badge-winner">WINNER</span>}
+            {weakHook && <span className="badge badge-weak">HOOK SLAB</span>}
+            <span className="badge badge-score">SCOR {score}</span>
           </div>
-            <div
-  style={{
-    marginTop: "10px",
-    fontWeight: "bold",
-    padding: "12px",
-    borderRadius: "14px",
-    background:
-      score >= 4 ? "#e4f3e8" : score >= 2 ? "#fff3df" : "#fdeaea",
-    color:
-      score >= 4 ? "#2f6b42" : score >= 2 ? "#9a6a1b" : "#a04646",
-    textAlign: "center"
-  }}
->
-  {score >= 4 && "Repeta stilul – asta functioneaza"}
-  {score >= 2 && score < 4 && "Optimizeaza hook-ul"}
-  {score < 2 && "Nu repeta – schimba abordarea"}
-</div>  
-  style={{
-    marginTop: "10px",
-    fontWeight: "bold",
-    padding: "10px 12px",
-    borderRadius: "12px",
-    background:
-      score >= 4 ? "#e4f3e8" : score >= 2 ? "#fff3df" : "#fdeaea",
-    color:
-      score >= 4 ? "#2f6b42" : score >= 2 ? "#9a6a1b" : "#a04646"
-  }}
->
-  {score >= 4 && "Repeta stilul – asta functioneaza"}
-  {score >= 2 && score < 4 && "Optimizeaza hook-ul"}
-  {score < 2 && "Nu repeta – schimba abordarea"}
-</div>
-            
+
+          <div
+            style={{
+              marginTop: "10px",
+              fontWeight: "bold",
+              padding: "12px",
+              borderRadius: "14px",
+              background:
+                score >= 4 ? "#e4f3e8" : score >= 2 ? "#fff3df" : "#fdeaea",
+              color:
+                score >= 4 ? "#2f6b42" : score >= 2 ? "#9a6a1b" : "#a04646",
+              textAlign: "center"
+            }}
+          >
+            {verdict}
+          </div>
+
+          <div
+            style={{
+              marginTop: "8px",
+              fontSize: "13px",
+              opacity: 0.8,
+              textAlign: "center"
+            }}
+          >
+            {diagnostic}
+          </div>
 
           <div className="platform-boxes">
             <div className="platform-box">
@@ -589,4 +595,4 @@ function MetricField({ label, value, onChange, placeholder }) {
       />
     </div>
   );
-}
+            }
