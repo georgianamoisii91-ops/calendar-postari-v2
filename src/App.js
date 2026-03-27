@@ -91,23 +91,37 @@ function CalendarPage({ page, title, subtitle }) {
   const year = 2026;
 
   const [currentMonth, setCurrentMonth] = useState(2);
-const [selectedDay, setSelectedDay] = useState(27);
-const [posted, setPosted] = useState({});
-const [dailyNotes, setDailyNotes] = useState({});
-const [videoLogs, setVideoLogs] = useState({});
-  useEffect(() => {
-  const saved = safeLoad(page, year);
-
-  if (!saved) return;
-
-  setCurrentMonth(saved.currentMonth ?? 2);
-  setSelectedDay(saved.selectedDay ?? 27);
-  setPosted(saved.posted ?? {});
-  setDailyNotes(saved.dailyNotes ?? {});
-  setVideoLogs(saved.videoLogs ?? {});
-}, [page]);
+  const [selectedDay, setSelectedDay] = useState(27);
+  const [posted, setPosted] = useState({});
+  const [dailyNotes, setDailyNotes] = useState({});
+  const [videoLogs, setVideoLogs] = useState({});
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
+    setLoaded(false);
+
+    const saved = safeLoad(page, year);
+
+    if (saved) {
+      setCurrentMonth(saved.currentMonth ?? 2);
+      setSelectedDay(saved.selectedDay ?? 27);
+      setPosted(saved.posted ?? {});
+      setDailyNotes(saved.dailyNotes ?? {});
+      setVideoLogs(saved.videoLogs ?? {});
+    } else {
+      setCurrentMonth(2);
+      setSelectedDay(27);
+      setPosted({});
+      setDailyNotes({});
+      setVideoLogs({});
+    }
+
+    setLoaded(true);
+  }, [page, year]);
+
+  useEffect(() => {
+    if (!loaded) return;
+
     try {
       const data = {
         currentMonth,
@@ -122,7 +136,7 @@ const [videoLogs, setVideoLogs] = useState({});
         JSON.stringify(data)
       );
     } catch {}
-  }, [page, year, currentMonth, selectedDay, posted, dailyNotes, videoLogs]);
+  }, [loaded, page, year, currentMonth, selectedDay, posted, dailyNotes, videoLogs]);
 
   const daysInMonth = getDaysInMonth(currentMonth, year);
   const firstDay = getFirstDayOfMonth(currentMonth, year);
@@ -587,4 +601,4 @@ function MetricField({ label, value, onChange, placeholder }) {
       />
     </div>
   );
-          }
+                                  }
