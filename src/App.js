@@ -27,28 +27,103 @@ function getDayName(month, day, year) {
   return names[d];
 }
 
-function storageKey(year) {
-  return `calendar-postari-${year}`;
+function storageKey(page, year) {
+  return `calendar-${page}-${year}`;
 }
 
-function safeLoad(year) {
+function safeLoad(page, year) {
   try {
-    const raw = localStorage.getItem(storageKey(year));
+    const raw = localStorage.getItem(storageKey(page, year));
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
   }
 }
 
-function safeSave(year, value) {
+function safeSave(page, year, value) {
   try {
-    localStorage.setItem(storageKey(year), JSON.stringify(value));
+    localStorage.setItem(storageKey(page, year), JSON.stringify(value));
   } catch {}
 }
 
 export default function App() {
+  const [page, setPage] = useState("anxios");
+
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#f6f3ee",
+        padding: "18px 14px 32px",
+        color: "#2d2a26",
+        maxWidth: "560px",
+        margin: "0 auto",
+        fontFamily: "Georgia, serif"
+      }}
+    >
+      <div style={{ textAlign: "center", marginBottom: "18px" }}>
+        <div style={{ fontSize: "22px", marginBottom: "6px" }}>🔴🌿</div>
+        <div style={{ fontSize: "24px", fontWeight: "bold" }}>
+          Calendar Postari 2026
+        </div>
+        <div style={{ fontSize: "12px", color: "#9b978f", marginTop: "4px" }}>
+          tracking separat pe nise
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "10px",
+          marginBottom: "16px"
+        }}
+      >
+        <button
+          onClick={() => setPage("anxios")}
+          style={{
+            padding: "13px 10px",
+            borderRadius: "14px",
+            border: "none",
+            background: page === "anxios" ? "#2d2a26" : "#e9e3da",
+            color: page === "anxios" ? "#fff" : "#2d2a26",
+            fontSize: "15px",
+            fontWeight: "bold",
+            cursor: "pointer"
+          }}
+        >
+          🔴 Anxios & Evitant
+        </button>
+
+        <button
+          onClick={() => setPage("reset")}
+          style={{
+            padding: "13px 10px",
+            borderRadius: "14px",
+            border: "none",
+            background: page === "reset" ? "#2d2a26" : "#e9e3da",
+            color: page === "reset" ? "#fff" : "#2d2a26",
+            fontSize: "15px",
+            fontWeight: "bold",
+            cursor: "pointer"
+          }}
+        >
+          🌿 Reset Bland
+        </button>
+      </div>
+
+      <CalendarPage
+        page={page}
+        title={page === "anxios" ? "Anxios & Evitant" : "Reset Bland"}
+        subtitle={page === "anxios" ? "anxios.si.evitant" : "reset.bland"}
+      />
+    </div>
+  );
+}
+
+function CalendarPage({ page, title, subtitle }) {
   const year = 2026;
-  const initialSaved = safeLoad(year);
+  const initialSaved = safeLoad(page, year);
 
   const [currentMonth, setCurrentMonth] = useState(
     initialSaved?.currentMonth ?? 2
@@ -67,8 +142,7 @@ export default function App() {
     const weekend = isWeekend(month, day, year);
     return {
       insta: weekend ? "20:30" : "21:00",
-      tiktok: weekend ? "21:00" : "21:30",
-      weekend
+      tiktok: weekend ? "21:00" : "21:30"
     };
   };
 
@@ -87,7 +161,7 @@ export default function App() {
       videoLogs,
       ...nextPartial
     };
-    safeSave(year, next);
+    safeSave(page, year, next);
   };
 
   const togglePosted = (platform) => {
@@ -190,23 +264,11 @@ export default function App() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#f6f3ee",
-        padding: "18px 14px 32px",
-        color: "#2d2a26",
-        maxWidth: "540px",
-        margin: "0 auto"
-      }}
-    >
-      <div style={{ textAlign: "center", marginBottom: "18px" }}>
-        <div style={{ fontSize: "22px", marginBottom: "6px" }}>🔴🔵</div>
-        <div style={{ fontSize: "24px", fontWeight: "bold", letterSpacing: "0.2px" }}>
-          Calendar Postari 2026
-        </div>
+    <>
+      <div style={{ textAlign: "center", marginBottom: "14px" }}>
+        <div style={{ fontSize: "20px", fontWeight: "bold" }}>{title}</div>
         <div style={{ fontSize: "12px", color: "#9b978f", marginTop: "4px" }}>
-          anxios.si.evitant
+          {subtitle}
         </div>
       </div>
 
@@ -473,7 +535,7 @@ export default function App() {
               style={inputStyle}
               value={currentNote.commands || ""}
               onChange={(e) => updateDailyNote("commands", e.target.value)}
-              placeholder="tt v3, tt v4"
+              placeholder={page === "anxios" ? "tt v3, tt v4" : "ig rb1, tt rb1"}
             />
           </div>
 
@@ -483,7 +545,11 @@ export default function App() {
               style={{ ...inputStyle, minHeight: "100px", resize: "vertical" }}
               value={currentNote.log || ""}
               onChange={(e) => updateDailyNote("log", e.target.value)}
-              placeholder="VIDEO 3&#10;2404 views | 5.2 sec | 52% retentie..."
+              placeholder={
+                page === "anxios"
+                  ? "VIDEO 3\n2404 views | 5.2 sec | 52% retentie..."
+                  : "video calm, hook bland, salvari bune..."
+              }
             />
           </div>
 
@@ -503,7 +569,7 @@ export default function App() {
               style={{ ...inputStyle, minHeight: "120px", resize: "vertical" }}
               value={currentLog.frames || ""}
               onChange={(e) => updateVideoLog("frames", e.target.value)}
-              placeholder="VIDEO 3: ..."
+              placeholder="VIDEO 1: ..."
             />
           </div>
 
@@ -513,7 +579,7 @@ export default function App() {
               style={{ ...inputStyle, minHeight: "90px", resize: "vertical" }}
               value={currentLog.caption || ""}
               onChange={(e) => updateVideoLog("caption", e.target.value)}
-              placeholder="Nu e despre lipsa de iubire..."
+              placeholder="caption video"
             />
           </div>
 
@@ -646,6 +712,6 @@ export default function App() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
-}
+          }
