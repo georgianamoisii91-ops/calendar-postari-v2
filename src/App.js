@@ -67,41 +67,18 @@ export default function App() {
           Calendar Postari 2026
         </div>
         <div style={{ fontSize: "12px", color: "#9b978f", marginTop: "4px" }}>
-          tracking separat pe nise
-        </div>
-      </div>
+        tracking separat pe nise
+  </div>
+</div>
 
-            <button
-  onClick={() => {
-    const anxios = localStorage.getItem("calendar-anxios-2026");
-    const reset = localStorage.getItem("calendar-reset-2026");
-
-    const data = {
-      anxios: anxios ? JSON.parse(anxios) : {},
-      reset: reset ? JSON.parse(reset) : {}
-    };
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: "application/json"
-    });
-
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "calendar-postari.json";
-    a.click();
+<div
+  style={{
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "10px",
+    marginBottom: "16px"
   }}
->
-  ⬇️ Export date
-</button>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "10px",
-          marginBottom: "16px"
-        }}
-      >
+>  
         <button
           onClick={() => setPage("anxios")}
           style={{
