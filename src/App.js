@@ -71,6 +71,29 @@ export default function App() {
         </div>
       </div>
 
+            <button
+  onClick={() => {
+    const anxios = localStorage.getItem("calendar-anxios-2026");
+    const reset = localStorage.getItem("calendar-reset-2026");
+
+    const data = {
+      anxios: anxios ? JSON.parse(anxios) : {},
+      reset: reset ? JSON.parse(reset) : {}
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json"
+    });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "calendar-postari.json";
+    a.click();
+  }}
+>
+  ⬇️ Export date
+</button>
       <div
         style={{
           display: "grid",
