@@ -48,7 +48,6 @@ function safeSave(year, value) {
 
 export default function App() {
   const year = 2026;
-
   const initialSaved = safeLoad(year);
 
   const [currentMonth, setCurrentMonth] = useState(
@@ -57,7 +56,6 @@ export default function App() {
   const [selectedDay, setSelectedDay] = useState(
     initialSaved?.selectedDay ?? 27
   );
-
   const [posted, setPosted] = useState(initialSaved?.posted ?? {});
   const [dailyNotes, setDailyNotes] = useState(initialSaved?.dailyNotes ?? {});
   const [videoLogs, setVideoLogs] = useState(initialSaved?.videoLogs ?? {});
@@ -69,7 +67,8 @@ export default function App() {
     const weekend = isWeekend(month, day, year);
     return {
       insta: weekend ? "20:30" : "21:00",
-      tiktok: weekend ? "21:00" : "21:30"
+      tiktok: weekend ? "21:00" : "21:30",
+      weekend
     };
   };
 
@@ -77,9 +76,7 @@ export default function App() {
   const platformKey = (month, day, platform) =>
     `${year}-${month + 1}-${day}-${platform}`;
 
-  const selectedDayKey = selectedDay
-    ? dayKey(currentMonth, selectedDay)
-    : null;
+  const selectedDayKey = selectedDay ? dayKey(currentMonth, selectedDay) : null;
 
   const persist = (nextPartial) => {
     const next = {
@@ -168,57 +165,487 @@ export default function App() {
   const currentNote = selectedDayKey ? (dailyNotes[selectedDayKey] || {}) : {};
   const currentLog = selectedDayKey ? (videoLogs[selectedDayKey] || {}) : {};
 
+  const cardStyle = {
+    background: "#ffffff",
+    borderRadius: "18px",
+    boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+    padding: "16px"
+  };
+
+  const inputStyle = {
+    width: "100%",
+    padding: "12px 14px",
+    borderRadius: "14px",
+    border: "1px solid #ddd7cf",
+    background: "#fafaf8",
+    fontSize: "14px",
+    fontFamily: "inherit",
+    boxSizing: "border-box"
+  };
+
+  const labelStyle = {
+    fontSize: "12px",
+    color: "#8c8c8c",
+    marginBottom: "6px"
+  };
+
   return (
-    <div style={{ padding: 20 }}>
-      <h2>Calendar Postari 2026</h2>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#f6f3ee",
+        padding: "18px 14px 32px",
+        color: "#2d2a26",
+        maxWidth: "540px",
+        margin: "0 auto"
+      }}
+    >
+      <div style={{ textAlign: "center", marginBottom: "18px" }}>
+        <div style={{ fontSize: "22px", marginBottom: "6px" }}>🔴🔵</div>
+        <div style={{ fontSize: "24px", fontWeight: "bold", letterSpacing: "0.2px" }}>
+          Calendar Postari 2026
+        </div>
+        <div style={{ fontSize: "12px", color: "#9b978f", marginTop: "4px" }}>
+          anxios.si.evitant
+        </div>
+      </div>
 
-      <div>Streak: {streak}</div>
-      <div>Progress: {progress}%</div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "10px",
+          marginBottom: "14px"
+        }}
+      >
+        <div style={cardStyle}>
+          <div style={{ fontSize: "12px", color: "#8c8c8c" }}>Streak</div>
+          <div style={{ fontSize: "28px", marginTop: "4px" }}>{streak}</div>
+        </div>
 
-      <div style={{ marginTop: 20 }}>
-        {Array.from({ length: daysInMonth }).map((_, i) => {
-          const day = i + 1;
-          return (
-            <button key={day} onClick={() => selectDay(day)}>
-              {day}
-            </button>
-          );
-        })}
+        <div style={cardStyle}>
+          <div style={{ fontSize: "12px", color: "#8c8c8c" }}>Progress</div>
+          <div style={{ fontSize: "28px", marginTop: "4px" }}>{progress}%</div>
+        </div>
+      </div>
+
+      <div style={{ ...cardStyle, marginBottom: "14px" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "12px"
+          }}
+        >
+          <button
+            onClick={() => {
+              const next = Math.max(0, currentMonth - 1);
+              setCurrentMonth(next);
+              setSelectedDay(null);
+              persist({ currentMonth: next, selectedDay: null });
+            }}
+            style={{
+              border: "none",
+              background: "#f1ece5",
+              width: "36px",
+              height: "36px",
+              borderRadius: "50%",
+              fontSize: "20px",
+              cursor: "pointer"
+            }}
+          >
+            ‹
+          </button>
+
+          <div style={{ fontSize: "18px", fontWeight: "bold" }}>
+            {months[currentMonth]} {year}
+          </div>
+
+          <button
+            onClick={() => {
+              const next = Math.min(11, currentMonth + 1);
+              setCurrentMonth(next);
+              setSelectedDay(null);
+              persist({ currentMonth: next, selectedDay: null });
+            }}
+            style={{
+              border: "none",
+              background: "#f1ece5",
+              width: "36px",
+              height: "36px",
+              borderRadius: "50%",
+              fontSize: "20px",
+              cursor: "pointer"
+            }}
+          >
+            ›
+          </button>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(7, 1fr)",
+            gap: "6px",
+            marginBottom: "8px"
+          }}
+        >
+          {dayNames.map((d) => (
+            <div
+              key={d}
+              style={{
+                textAlign: "center",
+                fontSize: "12px",
+                color: "#9b978f",
+                padding: "4px 0"
+              }}
+            >
+              {d}
+            </div>
+          ))}
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(7, 1fr)",
+            gap: "6px"
+          }}
+        >
+          {Array(firstDay)
+            .fill(null)
+            .map((_, i) => (
+              <div key={`empty-${i}`} />
+            ))}
+
+          {Array.from({ length: daysInMonth }).map((_, i) => {
+            const day = i + 1;
+            const isSelected = selectedDay === day;
+            const weekend = isWeekend(currentMonth, day, year);
+            const { ig, tt, any } = isPostedAnyDay(currentMonth, day);
+
+            return (
+              <button
+                key={day}
+                onClick={() => selectDay(day)}
+                style={{
+                  aspectRatio: "1",
+                  borderRadius: "14px",
+                  border: isSelected ? "none" : "1px solid #ebe4da",
+                  background: isSelected
+                    ? "#2d2a26"
+                    : weekend
+                    ? "#f3eee7"
+                    : "#ffffff",
+                  color: isSelected ? "#ffffff" : "#2d2a26",
+                  cursor: "pointer",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  padding: "0"
+                }}
+              >
+                <div style={{ fontSize: "14px", fontWeight: "bold" }}>{day}</div>
+                {any && (
+                  <div style={{ display: "flex", gap: "4px", marginTop: "4px" }}>
+                    <span
+                      style={{
+                        width: "6px",
+                        height: "6px",
+                        borderRadius: "50%",
+                        background: ig ? "#e8a598" : "#e5ddd3",
+                        display: "inline-block"
+                      }}
+                    />
+                    <span
+                      style={{
+                        width: "6px",
+                        height: "6px",
+                        borderRadius: "50%",
+                        background: tt ? "#a8c4d4" : "#e5ddd3",
+                        display: "inline-block"
+                      }}
+                    />
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {selectedDay && (
-        <div style={{ marginTop: 20 }}>
-          <h3>Ziua {selectedDay}</h3>
+        <div style={cardStyle}>
+          <div style={{ marginBottom: "14px" }}>
+            <div style={{ fontSize: "12px", color: "#8c8c8c" }}>
+              {getDayName(currentMonth, selectedDay, year)}
+            </div>
+            <div style={{ fontSize: "22px", fontWeight: "bold", marginTop: "3px" }}>
+              {selectedDay} {months[currentMonth]} {year}
+            </div>
+          </div>
 
-          <button onClick={() => togglePosted("insta")}>
-            Toggle Insta
-          </button>
+          <div
+            style={{
+              display: "grid",
+              gap: "10px",
+              marginBottom: "14px"
+            }}
+          >
+            <div
+              style={{
+                background: "#fafaf8",
+                borderRadius: "16px",
+                padding: "12px 14px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center"
+              }}
+            >
+              <div>
+                <div style={{ fontSize: "12px", color: "#8c8c8c" }}>📸 Instagram</div>
+                <div style={{ fontSize: "22px", marginTop: "2px" }}>
+                  {getPostingTime(currentMonth, selectedDay).insta}
+                </div>
+              </div>
 
-          <button onClick={() => togglePosted("tiktok")}>
-            Toggle TikTok
-          </button>
+              <button
+                onClick={() => togglePosted("insta")}
+                style={{
+                  width: "42px",
+                  height: "42px",
+                  borderRadius: "50%",
+                  border: "2px solid #e8a598",
+                  background: posted[platformKey(currentMonth, selectedDay, "insta")]
+                    ? "#e8a598"
+                    : "transparent",
+                  color: "#fff",
+                  cursor: "pointer",
+                  fontWeight: "bold"
+                }}
+              >
+                {posted[platformKey(currentMonth, selectedDay, "insta")] ? "✓" : ""}
+              </button>
+            </div>
 
-          <div>
+            <div
+              style={{
+                background: "#fafaf8",
+                borderRadius: "16px",
+                padding: "12px 14px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center"
+              }}
+            >
+              <div>
+                <div style={{ fontSize: "12px", color: "#8c8c8c" }}>🎵 TikTok</div>
+                <div style={{ fontSize: "22px", marginTop: "2px" }}>
+                  {getPostingTime(currentMonth, selectedDay).tiktok}
+                </div>
+              </div>
+
+              <button
+                onClick={() => togglePosted("tiktok")}
+                style={{
+                  width: "42px",
+                  height: "42px",
+                  borderRadius: "50%",
+                  border: "2px solid #a8c4d4",
+                  background: posted[platformKey(currentMonth, selectedDay, "tiktok")]
+                    ? "#a8c4d4"
+                    : "transparent",
+                  color: "#fff",
+                  cursor: "pointer",
+                  fontWeight: "bold"
+                }}
+              >
+                {posted[platformKey(currentMonth, selectedDay, "tiktok")] ? "✓" : ""}
+              </button>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: "12px" }}>
+            <div style={labelStyle}>Comenzi</div>
             <input
-              placeholder="Comenzi"
+              style={inputStyle}
               value={currentNote.commands || ""}
-              onChange={(e) =>
-                updateDailyNote("commands", e.target.value)
-              }
+              onChange={(e) => updateDailyNote("commands", e.target.value)}
+              placeholder="tt v3, tt v4"
             />
           </div>
 
-          <div>
+          <div style={{ marginBottom: "14px" }}>
+            <div style={labelStyle}>Log</div>
             <textarea
-              placeholder="Log"
+              style={{ ...inputStyle, minHeight: "100px", resize: "vertical" }}
               value={currentNote.log || ""}
-              onChange={(e) =>
-                updateDailyNote("log", e.target.value)
-              }
+              onChange={(e) => updateDailyNote("log", e.target.value)}
+              placeholder="VIDEO 3&#10;2404 views | 5.2 sec | 52% retentie..."
             />
+          </div>
+
+          <div style={{ marginBottom: "12px" }}>
+            <div style={labelStyle}>VIDEO nr</div>
+            <input
+              style={inputStyle}
+              value={currentLog.videoNr || ""}
+              onChange={(e) => updateVideoLog("videoNr", e.target.value)}
+              placeholder="3 / 4"
+            />
+          </div>
+
+          <div style={{ marginBottom: "12px" }}>
+            <div style={labelStyle}>Cadre</div>
+            <textarea
+              style={{ ...inputStyle, minHeight: "120px", resize: "vertical" }}
+              value={currentLog.frames || ""}
+              onChange={(e) => updateVideoLog("frames", e.target.value)}
+              placeholder="VIDEO 3: ..."
+            />
+          </div>
+
+          <div style={{ marginBottom: "12px" }}>
+            <div style={labelStyle}>Caption</div>
+            <textarea
+              style={{ ...inputStyle, minHeight: "90px", resize: "vertical" }}
+              value={currentLog.caption || ""}
+              onChange={(e) => updateVideoLog("caption", e.target.value)}
+              placeholder="Nu e despre lipsa de iubire..."
+            />
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "10px"
+            }}
+          >
+            <div>
+              <div style={labelStyle}>Durata</div>
+              <input
+                style={inputStyle}
+                value={currentLog.duration || ""}
+                onChange={(e) => updateVideoLog("duration", e.target.value)}
+                placeholder="9.98 / 13.01"
+              />
+            </div>
+
+            <div>
+              <div style={labelStyle}>Vizualizari</div>
+              <input
+                style={inputStyle}
+                value={currentLog.views || ""}
+                onChange={(e) => updateVideoLog("views", e.target.value)}
+                placeholder="2404 / 518"
+              />
+            </div>
+
+            <div>
+              <div style={labelStyle}>Timp mediu</div>
+              <input
+                style={inputStyle}
+                value={currentLog.avgTime || ""}
+                onChange={(e) => updateVideoLog("avgTime", e.target.value)}
+                placeholder="5.2 / 3.8"
+              />
+            </div>
+
+            <div>
+              <div style={labelStyle}>Completari</div>
+              <input
+                style={inputStyle}
+                value={currentLog.completions || ""}
+                onChange={(e) => updateVideoLog("completions", e.target.value)}
+                placeholder="14.45 / 4.22"
+              />
+            </div>
+
+            <div>
+              <div style={labelStyle}>Retentie</div>
+              <input
+                style={inputStyle}
+                value={currentLog.retention || ""}
+                onChange={(e) => updateVideoLog("retention", e.target.value)}
+                placeholder="52 / 29"
+              />
+            </div>
+
+            <div>
+              <div style={labelStyle}>Urmatori noi</div>
+              <input
+                style={inputStyle}
+                value={currentLog.newFollowers || ""}
+                onChange={(e) => updateVideoLog("newFollowers", e.target.value)}
+                placeholder="11 / 0"
+              />
+            </div>
+
+            <div>
+              <div style={labelStyle}>Aprecieri</div>
+              <input
+                style={inputStyle}
+                value={currentLog.likes || ""}
+                onChange={(e) => updateVideoLog("likes", e.target.value)}
+                placeholder="23"
+              />
+            </div>
+
+            <div>
+              <div style={labelStyle}>Distribuiri</div>
+              <input
+                style={inputStyle}
+                value={currentLog.shares || ""}
+                onChange={(e) => updateVideoLog("shares", e.target.value)}
+                placeholder="-"
+              />
+            </div>
+
+            <div>
+              <div style={labelStyle}>Comentarii</div>
+              <input
+                style={inputStyle}
+                value={currentLog.comments || ""}
+                onChange={(e) => updateVideoLog("comments", e.target.value)}
+                placeholder="1"
+              />
+            </div>
+
+            <div>
+              <div style={labelStyle}>Salvari</div>
+              <input
+                style={inputStyle}
+                value={currentLog.saves || ""}
+                onChange={(e) => updateVideoLog("saves", e.target.value)}
+                placeholder="8"
+              />
+            </div>
+
+            <div>
+              <div style={labelStyle}>Drop la</div>
+              <input
+                style={inputStyle}
+                value={currentLog.dropAt || ""}
+                onChange={(e) => updateVideoLog("dropAt", e.target.value)}
+                placeholder="0:01"
+              />
+            </div>
+
+            <div>
+              <div style={labelStyle}>Eligibil</div>
+              <input
+                style={inputStyle}
+                value={currentLog.eligible || ""}
+                onChange={(e) => updateVideoLog("eligible", e.target.value)}
+                placeholder="da / nu"
+              />
+            </div>
           </div>
         </div>
       )}
     </div>
   );
-  }
+}
