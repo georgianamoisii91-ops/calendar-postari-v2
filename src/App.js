@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 
 const months = [
   "Ianuarie",
@@ -38,7 +38,7 @@ function getDayName(month, day, year) {
 }
 
 function storageKey(page, year) {
-  return `calendar-${year}-${page}`;
+  return `calendar-${page}-${year}`;
 }
 
 function safeLoad(page, year) {
@@ -50,8 +50,234 @@ function safeLoad(page, year) {
   }
 }
 
+function createEmptyPlatform() {
+  return {
+    posted: false,
+    duration: "",
+    views: "",
+    avgTime: "",
+    completions: "",
+    retention: "",
+    newFollowers: "",
+    likes: "",
+    shares: "",
+    comments: "",
+    saves: "",
+    dropAt: "",
+    eligible: "",
+    postTime: "",
+    zeroSecondReaction: ""
+  };
+}
+
+function createEmptyVideo(index = 1) {
+  return {
+    id: `video-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    title: `Video ${index}`,
+    videoNr: "",
+    frames: "",
+    caption: "",
+    instagram: createEmptyPlatform(),
+    tiktok: createEmptyPlatform()
+  };
+}
+
+function normalizePlatform(raw) {
+  const base = createEmptyPlatform();
+  if (!raw || typeof raw !== "object") return base;
+
+  return {
+    ...base,
+    ...raw,
+    posted: !!raw.posted
+  };
+}
+
+function normalizeVideoItem(raw, index = 1) {
+  if (!raw || typeof raw !== "object") {
+    return createEmptyVideo(index);
+  }
+
+  const hasSeparatedPlatforms = raw.instagram || raw.tiktok;
+
+  if (hasSeparatedPlatforms) {
+    return {
+      id: raw.id || `video-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      title: raw.title || `Video ${index}`,
+      videoNr: raw.videoNr || "",
+      frames: raw.frames || "",
+      caption: raw.caption || "",
+      instagram: normalizePlatform(raw.instagram),
+      tiktok: normalizePlatform(raw.tiktok)
+    };
+  }
+
+  // Migrare din formatul vechi: nu pot determina sigur platforma originala.
+  // Datele vechi de metrics sunt mutate in blocul TikTok pentru continuitate.
+  return {
+    id: raw.id || `video-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    title: raw.title || `Video ${index}`,
+    videoNr: raw.videoNr || "",
+    frames: raw.frames || "",
+    caption: raw.caption || "",
+    instagram: createEmptyPlatform(),
+    tiktok: {
+      ...createEmptyPlatform(),
+      duration: raw.duration || "",
+      views: raw.views || "",
+      avgTime: raw.avgTime || "",
+      completions: raw.completions || "",
+      retention: raw.retention || "",
+      newFollowers: raw.newFollowers || "",
+      likes: raw.likes || "",
+      shares: raw.shares || "",
+      comments: raw.comments || "",
+      saves: raw.saves || "",
+      dropAt: raw.dropAt || "",
+      eligible: raw.eligible || "",
+      postTime: raw.postTime || "",
+      zeroSecondReaction: raw.zeroSecondReaction || ""
+    }
+  };
+}
+
+function normalizeVideoLogs(rawLogs) {
+  if (!rawLogs || typeof rawLogs !== "object") return {};
+
+  const normalized = {};
+
+  Object.entries(rawLogs).forEach(([dayKey, value]) => {
+    if (Array.isArray(value)) {
+      normalized[dayKey] = value.map((item, index) => normalizeVideoItem(item, index + 1));
+      return;
+    }
+
+    if (value && typeof value === "object") {
+      normalized[dayKey] = [normalizeVideoItem(value, 1)];
+      return;
+    }
+
+    normalized[dayKey] = [];
+  });
+
+  return normalized;
+}
+
+function getPlatformInsights(platformData) {
+  const retentionValue = parseFloat(
+    (platformData.retention || "").toString().replace("%", "").replace(",", ".")
+  );
+  const completionsValue = parseFloat(
+    (platformData.completions || "").toString().replace("%", "").replace(",", ".")
+  );
+  const savesValue = parseFloat(
+    (platformData.saves || "").toString().replace(",", ".")
+  );
+  const followersValue = parseFloat(
+    (platformData.newFollowers || "").toString().replace(",", ".")
+  );
+  const dropValue = (platformData.dropAt || "").trim();
+
+  let score = 0;
+  if (!isNaN(retentionValue) && retentionValue >= 40) score += 2;
+  if (!isNaN(completionsValue) && completionsValue >= 10) score += 2;
+  if (!isNaN(savesValue) && savesValue >= 5) score += 1;
+  if (!isNaN(followersValue) && followersValue > 0) score += 1;
+  if (dropValue === "0:01") score -= 1;
+
+  const isWinner =
+    (!isNaN(retentionValue) && retentionValue >= 40) ||
+    (!isNaN(savesValue) && savesValue >= 5);
+
+  const weakHook = dropValue === "0:01";
+
+  let verdict = "";
+  if (score >= 4) verdict = "Repeta stilul – asta functioneaza";
+  else if (score >= 2) verdict = "Optimizeaza hook-ul";
+  else verdict = "Nu repeta – schimba abordarea";
+
+  let diagnostic = "";
+  if (weakHook) {
+    diagnostic = "Problema: Hook slab (pierdere in primele secunde)";
+  } else if (!isNaN(savesValue) && savesValue < 3) {
+    diagnostic = "Problema: Continutul nu genereaza salvari";
+  } else if (!isNaN(retentionValue) && retentionValue < 30) {
+    diagnostic = "Problema: Retentie scazuta (nu tine atentia)";
+  } else if (score >= 4) {
+    diagnostic = "Format validat – merita repetat";
+  }
+
+  return {
+    score,
+    isWinner,
+    weakHook,
+    verdict,
+    diagnostic
+  };
+}
+
 export default function App() {
   const [page, setPage] = useState("anxios");
+  const fileInputRef = useRef(null);
+
+  const exportData = () => {
+    try {
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        data: {}
+      };
+
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith("calendar-")) {
+          const value = localStorage.getItem(key);
+          if (value !== null) {
+            payload.data[key] = value;
+          }
+        }
+      });
+
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {
+        type: "application/json"
+      });
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "calendar-postari-backup.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert("Exportul a esuat.");
+    }
+  };
+
+  const importData = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+
+      if (!parsed || typeof parsed !== "object" || !parsed.data || typeof parsed.data !== "object") {
+        alert("Fisier invalid.");
+        return;
+      }
+
+      Object.entries(parsed.data).forEach(([key, value]) => {
+        if (typeof value === "string") {
+          localStorage.setItem(key, value);
+        }
+      });
+
+      alert("Import reusit. Aplicatia se reincarca.");
+      window.location.reload();
+    } catch {
+      alert("Importul a esuat.");
+    } finally {
+      event.target.value = "";
+    }
+  };
 
   return (
     <div className="app-shell">
@@ -75,6 +301,31 @@ export default function App() {
         >
           🌿 Reset Bland
         </button>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "10px",
+          marginBottom: "16px"
+        }}
+      >
+        <button onClick={exportData} className="tab">
+          Export date
+        </button>
+
+        <button onClick={() => fileInputRef.current?.click()} className="tab">
+          Import date
+        </button>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/json"
+          onChange={importData}
+          style={{ display: "none" }}
+        />
       </div>
 
       <CalendarPage
@@ -107,7 +358,7 @@ function CalendarPage({ page, title, subtitle }) {
       setSelectedDay(saved.selectedDay ?? 27);
       setPosted(saved.posted ?? {});
       setDailyNotes(saved.dailyNotes ?? {});
-      setVideoLogs(saved.videoLogs ?? {});
+      setVideoLogs(normalizeVideoLogs(saved.videoLogs ?? {}));
     } else {
       setCurrentMonth(2);
       setSelectedDay(27);
@@ -155,6 +406,10 @@ function CalendarPage({ page, title, subtitle }) {
     };
   };
 
+  const selectDay = (day) => {
+    setSelectedDay((prev) => (prev === day ? null : day));
+  };
+
   const togglePosted = (platform) => {
     if (!selectedDay) return;
 
@@ -178,96 +433,144 @@ function CalendarPage({ page, title, subtitle }) {
     }));
   };
 
-  const updateVideoLog = (field, value) => {
+  const addVideo = () => {
     if (!selectedDayKey) return;
 
-    setVideoLogs((prev) => ({
-      ...prev,
-      [selectedDayKey]: {
-        ...(prev[selectedDayKey] || {}),
-        [field]: value
-      }
-    }));
+    setVideoLogs((prev) => {
+      const currentVideos = prev[selectedDayKey] || [];
+      const nextVideo = createEmptyVideo(currentVideos.length + 1);
+
+      return {
+        ...prev,
+        [selectedDayKey]: [...currentVideos, nextVideo]
+      };
+    });
   };
 
-  const selectDay = (day) => {
-    setSelectedDay((prev) => (prev === day ? null : day));
+  const removeVideo = (videoId) => {
+    if (!selectedDayKey) return;
+
+    setVideoLogs((prev) => {
+      const currentVideos = prev[selectedDayKey] || [];
+      return {
+        ...prev,
+        [selectedDayKey]: currentVideos.filter((video) => video.id !== videoId)
+      };
+    });
+  };
+
+  const updateVideoField = (videoId, field, value) => {
+    if (!selectedDayKey) return;
+
+    setVideoLogs((prev) => {
+      const currentVideos = prev[selectedDayKey] || [];
+
+      return {
+        ...prev,
+        [selectedDayKey]: currentVideos.map((video) =>
+          video.id === videoId
+            ? { ...video, [field]: value }
+            : video
+        )
+      };
+    });
+  };
+
+  const updatePlatformField = (videoId, platform, field, value) => {
+    if (!selectedDayKey) return;
+
+    setVideoLogs((prev) => {
+      const currentVideos = prev[selectedDayKey] || [];
+
+      return {
+        ...prev,
+        [selectedDayKey]: currentVideos.map((video) =>
+          video.id === videoId
+            ? {
+                ...video,
+                [platform]: {
+                  ...video[platform],
+                  [field]: value
+                }
+              }
+            : video
+        )
+      };
+    });
+  };
+
+  const togglePlatformPosted = (videoId, platform) => {
+    if (!selectedDayKey) return;
+
+    setVideoLogs((prev) => {
+      const currentVideos = prev[selectedDayKey] || [];
+
+      return {
+        ...prev,
+        [selectedDayKey]: currentVideos.map((video) =>
+          video.id === videoId
+            ? {
+                ...video,
+                [platform]: {
+                  ...video[platform],
+                  posted: !video[platform]?.posted
+                }
+              }
+            : video
+        )
+      };
+    });
+  };
+
+  const getVideosForDay = (month, day) => {
+    const key = dayKey(month, day);
+    return videoLogs[key] || [];
   };
 
   const isPostedAnyDay = (month, day) => {
-    const ig = posted[platformKey(month, day, "insta")];
-    const tt = posted[platformKey(month, day, "tiktok")];
+    const igManual = posted[platformKey(month, day, "insta")];
+    const ttManual = posted[platformKey(month, day, "tiktok")];
+    const videos = getVideosForDay(month, day);
+
+    const igVideo = videos.some((video) => video.instagram?.posted);
+    const ttVideo = videos.some((video) => video.tiktok?.posted);
+
+    const ig = !!(igManual || igVideo);
+    const tt = !!(ttManual || ttVideo);
+
     return { ig, tt, any: ig || tt };
   };
 
   const progress = useMemo(() => {
-    const uniqueDays = new Set(
-      Object.keys(posted)
-        .filter((key) => posted[key])
-        .map((key) => key.split("-").slice(0, 3).join("-"))
-    );
-    return Math.round((uniqueDays.size / 365) * 100);
-  }, [posted]);
-
-  const streak = useMemo(() => {
     let count = 0;
+
     for (let m = 0; m < 12; m++) {
       const dim = getDaysInMonth(m, year);
       for (let d = 1; d <= dim; d++) {
-        const ig = posted[platformKey(m, d, "insta")];
-        const tt = posted[platformKey(m, d, "tiktok")];
-        if (ig || tt) count++;
+        if (isPostedAnyDay(m, d).any) count++;
+      }
+    }
+
+    return Math.round((count / 365) * 100);
+  }, [posted, videoLogs]);
+
+  const streak = useMemo(() => {
+    let count = 0;
+
+    for (let m = 0; m < 12; m++) {
+      const dim = getDaysInMonth(m, year);
+
+      for (let d = 1; d <= dim; d++) {
+        if (isPostedAnyDay(m, d).any) count++;
         else return count;
       }
     }
+
     return count;
-  }, [posted]);
+  }, [posted, videoLogs]);
 
   const currentNote = selectedDayKey ? (dailyNotes[selectedDayKey] || {}) : {};
-  const currentLog = selectedDayKey ? (videoLogs[selectedDayKey] || {}) : {};
-
-  const retentionValue = parseFloat(
-    (currentLog.retention || "").toString().replace("%", "").replace(",", ".")
-  );
-  const completionsValue = parseFloat(
-    (currentLog.completions || "").toString().replace("%", "").replace(",", ".")
-  );
-  const savesValue = parseFloat(
-    (currentLog.saves || "").toString().replace(",", ".")
-  );
-  const followersValue = parseFloat(
-    (currentLog.newFollowers || "").toString().replace(",", ".")
-  );
-  const dropValue = (currentLog.dropAt || "").trim();
-
-  let score = 0;
-  if (!isNaN(retentionValue) && retentionValue >= 40) score += 2;
-  if (!isNaN(completionsValue) && completionsValue >= 10) score += 2;
-  if (!isNaN(savesValue) && savesValue >= 5) score += 1;
-  if (!isNaN(followersValue) && followersValue > 0) score += 1;
-  if (dropValue === "0:01") score -= 1;
-
-  const isWinner =
-    (!isNaN(retentionValue) && retentionValue >= 40) ||
-    (!isNaN(savesValue) && savesValue >= 5);
-
-  const weakHook = dropValue === "0:01";
-
-  let verdict = "";
-  if (score >= 4) verdict = "Repeta stilul – asta functioneaza";
-  else if (score >= 2) verdict = "Optimizeaza hook-ul";
-  else verdict = "Nu repeta – schimba abordarea";
-
-  let diagnostic = "";
-  if (weakHook) {
-    diagnostic = "Problema: Hook slab (pierdere in primele secunde)";
-  } else if (!isNaN(savesValue) && savesValue < 3) {
-    diagnostic = "Problema: Continutul nu genereaza salvari";
-  } else if (!isNaN(retentionValue) && retentionValue < 30) {
-    diagnostic = "Problema: Retentie scazuta (nu tine atentia)";
-  } else if (score >= 4) {
-    diagnostic = "Format validat – merita repetat";
-  }
+  const currentVideos = selectedDayKey ? (videoLogs[selectedDayKey] || []) : [];
 
   return (
     <>
@@ -372,43 +675,10 @@ function CalendarPage({ page, title, subtitle }) {
             </div>
           </div>
 
-          <div className="badges">
-            {isWinner && <span className="badge badge-winner">WINNER</span>}
-            {weakHook && <span className="badge badge-weak">HOOK SLAB</span>}
-            <span className="badge badge-score">SCOR {score}</span>
-          </div>
-
-          <div
-            style={{
-              marginTop: "10px",
-              fontWeight: "bold",
-              padding: "12px",
-              borderRadius: "14px",
-              background:
-                score >= 4 ? "#e4f3e8" : score >= 2 ? "#fff3df" : "#fdeaea",
-              color:
-                score >= 4 ? "#2f6b42" : score >= 2 ? "#9a6a1b" : "#a04646",
-              textAlign: "center"
-            }}
-          >
-            {verdict}
-          </div>
-
-          <div
-            style={{
-              marginTop: "8px",
-              fontSize: "13px",
-              opacity: 0.8,
-              textAlign: "center"
-            }}
-          >
-            {diagnostic}
-          </div>
-
           <div className="platform-boxes">
             <div className="platform-box">
               <div>
-                <div className="mini-label">📸 Instagram</div>
+                <div className="mini-label">📸 Instagram zi</div>
                 <div className="time-value">
                   {getPostingTime(currentMonth, selectedDay).insta}
                 </div>
@@ -426,7 +696,7 @@ function CalendarPage({ page, title, subtitle }) {
 
             <div className="platform-box">
               <div>
-                <div className="mini-label">🎵 TikTok</div>
+                <div className="mini-label">🎵 TikTok zi</div>
                 <div className="time-value">
                   {getPostingTime(currentMonth, selectedDay).tiktok}
                 </div>
@@ -454,7 +724,7 @@ function CalendarPage({ page, title, subtitle }) {
           </div>
 
           <div className="field-block">
-            <div className="mini-label">Log</div>
+            <div className="mini-label">Log zi</div>
             <textarea
               className="field textarea"
               value={currentNote.log || ""}
@@ -467,125 +737,301 @@ function CalendarPage({ page, title, subtitle }) {
             />
           </div>
 
-          <div className="field-block">
-            <div className="mini-label">VIDEO nr</div>
-            <input
-              className="field"
-              value={currentLog.videoNr || ""}
-              onChange={(e) => updateVideoLog("videoNr", e.target.value)}
-              placeholder="3 / 4"
-            />
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "14px",
+              gap: "10px"
+            }}
+          >
+            <div style={{ fontWeight: "bold" }}>
+              Video-uri: {currentVideos.length}
+            </div>
+
+            <button
+              onClick={addVideo}
+              className="tab"
+              style={{ padding: "10px 14px" }}
+            >
+              + Adauga video
+            </button>
           </div>
 
-          <div className="field-block">
-            <div className="mini-label">Cadre</div>
-            <textarea
-              className="field textarea large"
-              value={currentLog.frames || ""}
-              onChange={(e) => updateVideoLog("frames", e.target.value)}
-              placeholder="VIDEO 1: ..."
-            />
-          </div>
+          {currentVideos.length === 0 && (
+            <div
+              style={{
+                padding: "14px",
+                borderRadius: "14px",
+                background: "#fafaf8",
+                border: "1px solid #ddd7cf",
+                marginBottom: "14px",
+                fontSize: "14px"
+              }}
+            >
+              Nu exista video-uri pentru aceasta zi.
+            </div>
+          )}
 
-          <div className="field-block">
-            <div className="mini-label">Caption</div>
-            <textarea
-              className="field textarea"
-              value={currentLog.caption || ""}
-              onChange={(e) => updateVideoLog("caption", e.target.value)}
-              placeholder="caption video"
-            />
-          </div>
+          {currentVideos.map((video, index) => (
+            <div
+              key={video.id}
+              className="card"
+              style={{
+                padding: "14px",
+                marginBottom: "14px",
+                boxShadow: "0 4px 16px rgba(93, 74, 55, 0.06)"
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: "10px",
+                  marginBottom: "12px"
+                }}
+              >
+                <input
+                  className="field"
+                  value={video.title || ""}
+                  onChange={(e) => updateVideoField(video.id, "title", e.target.value)}
+                  placeholder={`Video ${index + 1}`}
+                  style={{ marginBottom: 0 }}
+                />
 
-          <div className="metrics-grid">
-            <MetricField
-              label="Durata"
-              value={currentLog.duration || ""}
-              onChange={(value) => updateVideoLog("duration", value)}
-              placeholder="9.98 / 13.01"
-            />
-            <MetricField
-              label="Vizualizari"
-              value={currentLog.views || ""}
-              onChange={(value) => updateVideoLog("views", value)}
-              placeholder="2404 / 518"
-            />
-            <MetricField
-              label="Timp mediu"
-              value={currentLog.avgTime || ""}
-              onChange={(value) => updateVideoLog("avgTime", value)}
-              placeholder="5.2 / 3.8"
-            />
-            <MetricField
-              label="Completari"
-              value={currentLog.completions || ""}
-              onChange={(value) => updateVideoLog("completions", value)}
-              placeholder="14.45 / 4.22"
-            />
-            <MetricField
-              label="Retentie"
-              value={currentLog.retention || ""}
-              onChange={(value) => updateVideoLog("retention", value)}
-              placeholder="52 / 29"
-            />
-            <MetricField
-              label="Urmatori noi"
-              value={currentLog.newFollowers || ""}
-              onChange={(value) => updateVideoLog("newFollowers", value)}
-              placeholder="11 / 0"
-            />
-            <MetricField
-              label="Aprecieri"
-              value={currentLog.likes || ""}
-              onChange={(value) => updateVideoLog("likes", value)}
-              placeholder="23"
-            />
-            <MetricField
-              label="Distribuiri"
-              value={currentLog.shares || ""}
-              onChange={(value) => updateVideoLog("shares", value)}
-              placeholder="-"
-            />
-            <MetricField
-              label="Comentarii"
-              value={currentLog.comments || ""}
-              onChange={(value) => updateVideoLog("comments", value)}
-              placeholder="1"
-            />
-            <MetricField
-              label="Salvari"
-              value={currentLog.saves || ""}
-              onChange={(value) => updateVideoLog("saves", value)}
-              placeholder="8"
-            />
-            <MetricField
-              label="Drop la"
-              value={currentLog.dropAt || ""}
-              onChange={(value) => updateVideoLog("dropAt", value)}
-              placeholder="0:01"
-            />
-            <MetricField
-              label="Eligibil"
-              value={currentLog.eligible || ""}
-              onChange={(value) => updateVideoLog("eligible", value)}
-              placeholder="da / nu"
-            />
-            <MetricField
-              label="Ora postarii"
-              value={currentLog.postTime || ""}
-              onChange={(value) => updateVideoLog("postTime", value)}
-              placeholder="15:36"
-            />
-            <MetricField
-              label="Reactii la 0:00"
-              value={currentLog.zeroSecondReaction || ""}
-              onChange={(value) => updateVideoLog("zeroSecondReaction", value)}
-              placeholder="71%"
-            />
-          </div>
+                <button
+                  onClick={() => removeVideo(video.id)}
+                  className="tab"
+                  style={{
+                    padding: "10px 12px",
+                    whiteSpace: "nowrap"
+                  }}
+                >
+                  Sterge
+                </button>
+              </div>
+
+              <div className="field-block">
+                <div className="mini-label">VIDEO nr</div>
+                <input
+                  className="field"
+                  value={video.videoNr || ""}
+                  onChange={(e) => updateVideoField(video.id, "videoNr", e.target.value)}
+                  placeholder="3 / 4"
+                />
+              </div>
+
+              <div className="field-block">
+                <div className="mini-label">Cadre</div>
+                <textarea
+                  className="field textarea large"
+                  value={video.frames || ""}
+                  onChange={(e) => updateVideoField(video.id, "frames", e.target.value)}
+                  placeholder="VIDEO 1: ..."
+                />
+              </div>
+
+              <div className="field-block">
+                <div className="mini-label">Caption</div>
+                <textarea
+                  className="field textarea"
+                  value={video.caption || ""}
+                  onChange={(e) => updateVideoField(video.id, "caption", e.target.value)}
+                  placeholder="caption video"
+                />
+              </div>
+
+              <PlatformSection
+                platformKeyName="instagram"
+                platformLabel="Instagram"
+                accentClass="insta"
+                data={video.instagram}
+                onTogglePosted={() => togglePlatformPosted(video.id, "instagram")}
+                onChange={(field, value) =>
+                  updatePlatformField(video.id, "instagram", field, value)
+                }
+              />
+
+              <PlatformSection
+                platformKeyName="tiktok"
+                platformLabel="TikTok"
+                accentClass="tiktok"
+                data={video.tiktok}
+                onTogglePosted={() => togglePlatformPosted(video.id, "tiktok")}
+                onChange={(field, value) =>
+                  updatePlatformField(video.id, "tiktok", field, value)
+                }
+              />
+            </div>
+          ))}
         </div>
       )}
     </>
+  );
+}
+
+function PlatformSection({
+  platformKeyName,
+  platformLabel,
+  accentClass,
+  data,
+  onTogglePosted,
+  onChange
+}) {
+  const insights = getPlatformInsights(data);
+
+  return (
+    <div
+      style={{
+        border: "1px solid #e8ded2",
+        borderRadius: "16px",
+        padding: "14px",
+        marginBottom: "14px",
+        background: "#fffdfa"
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "10px",
+          marginBottom: "12px"
+        }}
+      >
+        <div style={{ fontWeight: "bold" }}>{platformLabel}</div>
+
+        <button
+          onClick={onTogglePosted}
+          className={`toggle-circle ${accentClass} ${data.posted ? "on" : ""}`}
+        >
+          {data.posted ? "✓" : ""}
+        </button>
+      </div>
+
+      <div className="badges">
+        {insights.isWinner && <span className="badge badge-winner">WINNER</span>}
+        {insights.weakHook && <span className="badge badge-weak">HOOK SLAB</span>}
+        <span className="badge badge-score">SCOR {insights.score}</span>
+      </div>
+
+      <div
+        style={{
+          marginTop: "10px",
+          fontWeight: "bold",
+          padding: "12px",
+          borderRadius: "14px",
+          background:
+            insights.score >= 4 ? "#e4f3e8" : insights.score >= 2 ? "#fff3df" : "#fdeaea",
+          color:
+            insights.score >= 4 ? "#2f6b42" : insights.score >= 2 ? "#9a6a1b" : "#a04646",
+          textAlign: "center"
+        }}
+      >
+        {insights.verdict}
+      </div>
+
+      <div
+        style={{
+          marginTop: "8px",
+          fontSize: "13px",
+          opacity: 0.8,
+          textAlign: "center",
+          marginBottom: "12px"
+        }}
+      >
+        {insights.diagnostic}
+      </div>
+
+      <div className="metrics-grid">
+        <MetricField
+          label="Durata"
+          value={data.duration || ""}
+          onChange={(value) => onChange("duration", value)}
+          placeholder="9.98 / 13.01"
+        />
+        <MetricField
+          label="Vizualizari"
+          value={data.views || ""}
+          onChange={(value) => onChange("views", value)}
+          placeholder="2404 / 518"
+        />
+        <MetricField
+          label="Timp mediu"
+          value={data.avgTime || ""}
+          onChange={(value) => onChange("avgTime", value)}
+          placeholder="5.2 / 3.8"
+        />
+        <MetricField
+          label="Completari"
+          value={data.completions || ""}
+          onChange={(value) => onChange("completions", value)}
+          placeholder="14.45 / 4.22"
+        />
+        <MetricField
+          label="Retentie"
+          value={data.retention || ""}
+          onChange={(value) => onChange("retention", value)}
+          placeholder="52 / 29"
+        />
+        <MetricField
+          label="Urmatori noi"
+          value={data.newFollowers || ""}
+          onChange={(value) => onChange("newFollowers", value)}
+          placeholder="11 / 0"
+        />
+        <MetricField
+          label="Aprecieri"
+          value={data.likes || ""}
+          onChange={(value) => onChange("likes", value)}
+          placeholder="23"
+        />
+        <MetricField
+          label="Distribuiri"
+          value={data.shares || ""}
+          onChange={(value) => onChange("shares", value)}
+          placeholder="-"
+        />
+        <MetricField
+          label="Comentarii"
+          value={data.comments || ""}
+          onChange={(value) => onChange("comments", value)}
+          placeholder="1"
+        />
+        <MetricField
+          label="Salvari"
+          value={data.saves || ""}
+          onChange={(value) => onChange("saves", value)}
+          placeholder="8"
+        />
+        <MetricField
+          label="Drop la"
+          value={data.dropAt || ""}
+          onChange={(value) => onChange("dropAt", value)}
+          placeholder="0:01"
+        />
+        <MetricField
+          label="Eligibil"
+          value={data.eligible || ""}
+          onChange={(value) => onChange("eligible", value)}
+          placeholder="da / nu"
+        />
+        <MetricField
+          label="Ora postarii"
+          value={data.postTime || ""}
+          onChange={(value) => onChange("postTime", value)}
+          placeholder="15:36"
+        />
+        <MetricField
+          label="Reactii la 0:00"
+          value={data.zeroSecondReaction || ""}
+          onChange={(value) => onChange("zeroSecondReaction", value)}
+          placeholder="71%"
+        />
+      </div>
+    </div>
   );
 }
 
@@ -601,4 +1047,4 @@ function MetricField({ label, value, onChange, placeholder }) {
       />
     </div>
   );
-                                  }
+}
