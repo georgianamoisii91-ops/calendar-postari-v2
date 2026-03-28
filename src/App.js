@@ -75,6 +75,9 @@ function createEmptyVideo(index = 1) {
     id: `video-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     title: `Video ${index}`,
     videoNr: "",
+    fileName: "",
+    videoLink: "",
+    hookText: "",
     frames: "",
     caption: "",
     instagram: createEmptyPlatform(),
@@ -105,6 +108,9 @@ function normalizeVideoItem(raw, index = 1) {
       id: raw.id || `video-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       title: raw.title || `Video ${index}`,
       videoNr: raw.videoNr || "",
+      fileName: raw.fileName || "",
+      videoLink: raw.videoLink || "",
+      hookText: raw.hookText || "",
       frames: raw.frames || "",
       caption: raw.caption || "",
       instagram: normalizePlatform(raw.instagram),
@@ -112,12 +118,13 @@ function normalizeVideoItem(raw, index = 1) {
     };
   }
 
-  // Migrare din formatul vechi: nu pot determina sigur platforma originala.
-  // Datele vechi de metrics sunt mutate in blocul TikTok pentru continuitate.
   return {
     id: raw.id || `video-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     title: raw.title || `Video ${index}`,
     videoNr: raw.videoNr || "",
+    fileName: raw.fileName || "",
+    videoLink: raw.videoLink || "",
+    hookText: raw.hookText || "",
     frames: raw.frames || "",
     caption: raw.caption || "",
     instagram: createEmptyPlatform(),
@@ -468,9 +475,7 @@ function CalendarPage({ page, title, subtitle }) {
       return {
         ...prev,
         [selectedDayKey]: currentVideos.map((video) =>
-          video.id === videoId
-            ? { ...video, [field]: value }
-            : video
+          video.id === videoId ? { ...video, [field]: value } : video
         )
       };
     });
@@ -824,6 +829,36 @@ function CalendarPage({ page, title, subtitle }) {
               </div>
 
               <div className="field-block">
+                <div className="mini-label">Nume fisier video</div>
+                <input
+                  className="field"
+                  value={video.fileName || ""}
+                  onChange={(e) => updateVideoField(video.id, "fileName", e.target.value)}
+                  placeholder="video_27_anxios_01.mp4"
+                />
+              </div>
+
+              <div className="field-block">
+                <div className="mini-label">Link video</div>
+                <input
+                  className="field"
+                  value={video.videoLink || ""}
+                  onChange={(e) => updateVideoField(video.id, "videoLink", e.target.value)}
+                  placeholder="link TikTok / Instagram"
+                />
+              </div>
+
+              <div className="field-block">
+                <div className="mini-label">Hook text (prima secunda)</div>
+                <textarea
+                  className="field textarea"
+                  value={video.hookText || ""}
+                  onChange={(e) => updateVideoField(video.id, "hookText", e.target.value)}
+                  placeholder="textul exact din prima secunda"
+                />
+              </div>
+
+              <div className="field-block">
                 <div className="mini-label">Cadre</div>
                 <textarea
                   className="field textarea large"
@@ -844,7 +879,6 @@ function CalendarPage({ page, title, subtitle }) {
               </div>
 
               <PlatformSection
-                platformKeyName="instagram"
                 platformLabel="Instagram"
                 accentClass="insta"
                 data={video.instagram}
@@ -855,7 +889,6 @@ function CalendarPage({ page, title, subtitle }) {
               />
 
               <PlatformSection
-                platformKeyName="tiktok"
                 platformLabel="TikTok"
                 accentClass="tiktok"
                 data={video.tiktok}
@@ -873,7 +906,6 @@ function CalendarPage({ page, title, subtitle }) {
 }
 
 function PlatformSection({
-  platformKeyName,
   platformLabel,
   accentClass,
   data,
