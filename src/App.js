@@ -354,6 +354,7 @@ function CalendarPage({ page, title, subtitle }) {
   const [dailyNotes, setDailyNotes] = useState({});
   const [videoLogs, setVideoLogs] = useState({});
   const [loaded, setLoaded] = useState(false);
+  const [openVideos, setOpenVideos] = useState({});
 
   useEffect(() => {
     setLoaded(false);
@@ -395,6 +396,10 @@ function CalendarPage({ page, title, subtitle }) {
       );
     } catch {}
   }, [loaded, page, year, currentMonth, selectedDay, posted, dailyNotes, videoLogs]);
+
+  useEffect(() => {
+    setOpenVideos({});
+  }, [selectedDay, currentMonth, page]);
 
   const daysInMonth = getDaysInMonth(currentMonth, year);
   const firstDay = getFirstDayOfMonth(currentMonth, year);
@@ -527,6 +532,13 @@ function CalendarPage({ page, title, subtitle }) {
     });
   };
 
+  const toggleVideo = (id) => {
+    setOpenVideos((prev) => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
   const getVideosForDay = (month, day) => {
     const key = dayKey(month, day);
     return videoLogs[key] || [];
@@ -576,6 +588,16 @@ function CalendarPage({ page, title, subtitle }) {
 
   const currentNote = selectedDayKey ? (dailyNotes[selectedDayKey] || {}) : {};
   const currentVideos = selectedDayKey ? (videoLogs[selectedDayKey] || []) : [];
+
+  const getVideoHeader = (video, index) => {
+    const ig = getPlatformInsights(video.instagram || createEmptyPlatform());
+    const tt = getPlatformInsights(video.tiktok || createEmptyPlatform());
+
+    const igPosted = video.instagram?.posted;
+    const ttPosted = video.tiktok?.posted;
+
+    return `Video ${index + 1} | IG ${igPosted ? "✓" : "✗"} ${ig.score} | TT ${ttPosted ? "✓" : "✗"} ${tt.score}`;
+  };
 
   return (
     <>
@@ -779,126 +801,158 @@ function CalendarPage({ page, title, subtitle }) {
             </div>
           )}
 
-          {currentVideos.map((video, index) => (
-            <div
-              key={video.id}
-              className="card"
-              style={{
-                padding: "14px",
-                marginBottom: "14px",
-                boxShadow: "0 4px 16px rgba(93, 74, 55, 0.06)"
-              }}
-            >
+          {currentVideos.map((video, index) => {
+            const isOpen = !!openVideos[video.id];
+
+            return (
               <div
+                key={video.id}
+                className="card"
                 style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: "10px",
-                  marginBottom: "12px"
+                  padding: "14px",
+                  marginBottom: "14px",
+                  boxShadow: "0 4px 16px rgba(93, 74, 55, 0.06)"
                 }}
               >
-                <input
-                  className="field"
-                  value={video.title || ""}
-                  onChange={(e) => updateVideoField(video.id, "title", e.target.value)}
-                  placeholder={`Video ${index + 1}`}
-                  style={{ marginBottom: 0 }}
-                />
-
                 <button
-                  onClick={() => removeVideo(video.id)}
-                  className="tab"
+                  type="button"
+                  onClick={() => toggleVideo(video.id)}
                   style={{
-                    padding: "10px 12px",
-                    whiteSpace: "nowrap"
+                    width: "100%",
+                    border: "1px solid #e8ded2",
+                    background: "#fffdfa",
+                    borderRadius: "14px",
+                    padding: "12px",
+                    textAlign: "left",
+                    fontWeight: "bold",
+                    fontSize: "14px",
+                    cursor: "pointer",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: "10px",
+                    marginBottom: isOpen ? "12px" : "0"
                   }}
                 >
-                  Sterge
+                  <span>{getVideoHeader(video, index)}</span>
+                  <span>{isOpen ? "▲" : "▼"}</span>
                 </button>
+
+                {isOpen && (
+                  <>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: "10px",
+                        marginBottom: "12px"
+                      }}
+                    >
+                      <input
+                        className="field"
+                        value={video.title || ""}
+                        onChange={(e) => updateVideoField(video.id, "title", e.target.value)}
+                        placeholder={`Video ${index + 1}`}
+                        style={{ marginBottom: 0 }}
+                      />
+
+                      <button
+                        onClick={() => removeVideo(video.id)}
+                        className="tab"
+                        style={{
+                          padding: "10px 12px",
+                          whiteSpace: "nowrap"
+                        }}
+                      >
+                        Sterge
+                      </button>
+                    </div>
+
+                    <div className="field-block">
+                      <div className="mini-label">VIDEO nr</div>
+                      <input
+                        className="field"
+                        value={video.videoNr || ""}
+                        onChange={(e) => updateVideoField(video.id, "videoNr", e.target.value)}
+                        placeholder="3 / 4"
+                      />
+                    </div>
+
+                    <div className="field-block">
+                      <div className="mini-label">Nume fisier video</div>
+                      <input
+                        className="field"
+                        value={video.fileName || ""}
+                        onChange={(e) => updateVideoField(video.id, "fileName", e.target.value)}
+                        placeholder="video_27_anxios_01.mp4"
+                      />
+                    </div>
+
+                    <div className="field-block">
+                      <div className="mini-label">Link video</div>
+                      <input
+                        className="field"
+                        value={video.videoLink || ""}
+                        onChange={(e) => updateVideoField(video.id, "videoLink", e.target.value)}
+                        placeholder="link TikTok / Instagram"
+                      />
+                    </div>
+
+                    <div className="field-block">
+                      <div className="mini-label">Hook text (prima secunda)</div>
+                      <textarea
+                        className="field textarea"
+                        value={video.hookText || ""}
+                        onChange={(e) => updateVideoField(video.id, "hookText", e.target.value)}
+                        placeholder="textul exact din prima secunda"
+                      />
+                    </div>
+
+                    <div className="field-block">
+                      <div className="mini-label">Cadre</div>
+                      <textarea
+                        className="field textarea large"
+                        value={video.frames || ""}
+                        onChange={(e) => updateVideoField(video.id, "frames", e.target.value)}
+                        placeholder="VIDEO 1: ..."
+                      />
+                    </div>
+
+                    <div className="field-block">
+                      <div className="mini-label">Caption</div>
+                      <textarea
+                        className="field textarea"
+                        value={video.caption || ""}
+                        onChange={(e) => updateVideoField(video.id, "caption", e.target.value)}
+                        placeholder="caption video"
+                      />
+                    </div>
+
+                    <PlatformSection
+                      platformLabel="Instagram"
+                      accentClass="insta"
+                      data={video.instagram}
+                      onTogglePosted={() => togglePlatformPosted(video.id, "instagram")}
+                      onChange={(field, value) =>
+                        updatePlatformField(video.id, "instagram", field, value)
+                      }
+                    />
+
+                    <PlatformSection
+                      platformLabel="TikTok"
+                      accentClass="tiktok"
+                      data={video.tiktok}
+                      onTogglePosted={() => togglePlatformPosted(video.id, "tiktok")}
+                      onChange={(field, value) =>
+                        updatePlatformField(video.id, "tiktok", field, value)
+                      }
+                    />
+                  </>
+                )}
               </div>
-
-              <div className="field-block">
-                <div className="mini-label">VIDEO nr</div>
-                <input
-                  className="field"
-                  value={video.videoNr || ""}
-                  onChange={(e) => updateVideoField(video.id, "videoNr", e.target.value)}
-                  placeholder="3 / 4"
-                />
-              </div>
-
-              <div className="field-block">
-                <div className="mini-label">Nume fisier video</div>
-                <input
-                  className="field"
-                  value={video.fileName || ""}
-                  onChange={(e) => updateVideoField(video.id, "fileName", e.target.value)}
-                  placeholder="video_27_anxios_01.mp4"
-                />
-              </div>
-
-              <div className="field-block">
-                <div className="mini-label">Link video</div>
-                <input
-                  className="field"
-                  value={video.videoLink || ""}
-                  onChange={(e) => updateVideoField(video.id, "videoLink", e.target.value)}
-                  placeholder="link TikTok / Instagram"
-                />
-              </div>
-
-              <div className="field-block">
-                <div className="mini-label">Hook text (prima secunda)</div>
-                <textarea
-                  className="field textarea"
-                  value={video.hookText || ""}
-                  onChange={(e) => updateVideoField(video.id, "hookText", e.target.value)}
-                  placeholder="textul exact din prima secunda"
-                />
-              </div>
-
-              <div className="field-block">
-                <div className="mini-label">Cadre</div>
-                <textarea
-                  className="field textarea large"
-                  value={video.frames || ""}
-                  onChange={(e) => updateVideoField(video.id, "frames", e.target.value)}
-                  placeholder="VIDEO 1: ..."
-                />
-              </div>
-
-              <div className="field-block">
-                <div className="mini-label">Caption</div>
-                <textarea
-                  className="field textarea"
-                  value={video.caption || ""}
-                  onChange={(e) => updateVideoField(video.id, "caption", e.target.value)}
-                  placeholder="caption video"
-                />
-              </div>
-
-              <PlatformSection
-                platformLabel="Instagram"
-                accentClass="insta"
-                data={video.instagram}
-                onTogglePosted={() => togglePlatformPosted(video.id, "instagram")}
-                onChange={(field, value) =>
-                  updatePlatformField(video.id, "instagram", field, value)
-                }
-              />
-
-              <PlatformSection
-                platformLabel="TikTok"
-                accentClass="tiktok"
-                data={video.tiktok}
-                onTogglePosted={() => togglePlatformPosted(video.id, "tiktok")}
-                onChange={(field, value) =>
-                  updatePlatformField(video.id, "tiktok", field, value)
-                }
-              />
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </>
@@ -1079,4 +1133,4 @@ function MetricField({ label, value, onChange, placeholder }) {
       />
     </div>
   );
-}
+      }
