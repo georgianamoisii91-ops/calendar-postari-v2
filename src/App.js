@@ -53,6 +53,15 @@ function safeLoad(page, year) {
 function createEmptyPlatform() {
   return {
     posted: false,
+
+    // continut separat pe platforma
+    fileName: "",
+    videoLink: "",
+    hookText: "",
+    frames: "",
+    caption: "",
+
+    // metrics
     duration: "",
     views: "",
     avgTime: "",
@@ -75,11 +84,6 @@ function createEmptyVideo(index = 1) {
     id: `video-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     title: `Video ${index}`,
     videoNr: "",
-    fileName: "",
-    videoLink: "",
-    hookText: "",
-    frames: "",
-    caption: "",
     instagram: createEmptyPlatform(),
     tiktok: createEmptyPlatform()
   };
@@ -108,28 +112,33 @@ function normalizeVideoItem(raw, index = 1) {
       id: raw.id || `video-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       title: raw.title || `Video ${index}`,
       videoNr: raw.videoNr || "",
-      fileName: raw.fileName || "",
-      videoLink: raw.videoLink || "",
-      hookText: raw.hookText || "",
-      frames: raw.frames || "",
-      caption: raw.caption || "",
       instagram: normalizePlatform(raw.instagram),
       tiktok: normalizePlatform(raw.tiktok)
     };
   }
 
-  return {
-    id: raw.id || `video-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    title: raw.title || `Video ${index}`,
-    videoNr: raw.videoNr || "",
+  // migrare din structura veche
+  // nu pot determina sigur platforma originala a campurilor comune vechi
+  // pentru a nu pierde informatia, copiez campurile comune in ambele platforme
+  const migratedContent = {
     fileName: raw.fileName || "",
     videoLink: raw.videoLink || "",
     hookText: raw.hookText || "",
     frames: raw.frames || "",
-    caption: raw.caption || "",
-    instagram: createEmptyPlatform(),
+    caption: raw.caption || ""
+  };
+
+  return {
+    id: raw.id || `video-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    title: raw.title || `Video ${index}`,
+    videoNr: raw.videoNr || "",
+    instagram: {
+      ...createEmptyPlatform(),
+      ...migratedContent
+    },
     tiktok: {
       ...createEmptyPlatform(),
+      ...migratedContent,
       duration: raw.duration || "",
       views: raw.views || "",
       avgTime: raw.avgTime || "",
@@ -155,7 +164,9 @@ function normalizeVideoLogs(rawLogs) {
 
   Object.entries(rawLogs).forEach(([dayKey, value]) => {
     if (Array.isArray(value)) {
-      normalized[dayKey] = value.map((item, index) => normalizeVideoItem(item, index + 1));
+      normalized[dayKey] = value.map((item, index) =>
+        normalizeVideoItem(item, index + 1)
+      );
       return;
     }
 
@@ -266,7 +277,12 @@ export default function App() {
       const text = await file.text();
       const parsed = JSON.parse(text);
 
-      if (!parsed || typeof parsed !== "object" || !parsed.data || typeof parsed.data !== "object") {
+      if (
+        !parsed ||
+        typeof parsed !== "object" ||
+        !parsed.data ||
+        typeof parsed.data !== "object"
+      ) {
         alert("Fisier invalid.");
         return;
       }
@@ -589,6 +605,31 @@ function CalendarPage({ page, title, subtitle }) {
   const currentNote = selectedDayKey ? (dailyNotes[selectedDayKey] || {}) : {};
   const currentVideos = selectedDayKey ? (videoLogs[selectedDayKey] || []) : [];
 
+  const dayScore = useMemo(() => {
+    if (!currentVideos || currentVideos.length === 0) return 0;
+
+    let total = 0;
+    let count = 0;
+
+    currentVideos.forEach((video) => {
+      const ig = getPlatformInsights(video.instagram);
+      const tt = getPlatformInsights(video.tiktok);
+
+      if (video.instagram?.posted) {
+        total += ig.score;
+        count++;
+      }
+
+      if (video.tiktok?.posted) {
+        total += tt.score;
+        count++;
+      }
+    });
+
+    if (count === 0) return 0;
+    return Math.round(total / count);
+  }, [currentVideos]);
+
   const getVideoHeader = (video, index) => {
     const ig = getPlatformInsights(video.instagram || createEmptyPlatform());
     const tt = getPlatformInsights(video.tiktok || createEmptyPlatform());
@@ -700,6 +741,21 @@ function CalendarPage({ page, title, subtitle }) {
             <div className="date-title">
               {selectedDay} {months[currentMonth]} {year}
             </div>
+          </div>
+
+          <div
+            style={{
+              marginTop: "10px",
+              padding: "10px",
+              borderRadius: "12px",
+              background:
+                dayScore >= 4 ? "#e4f3e8" : dayScore >= 2 ? "#fff3df" : "#fdeaea",
+              textAlign: "center",
+              fontWeight: "bold",
+              marginBottom: "14px"
+            }}
+          >
+            SCOR ZI: {dayScore}
           </div>
 
           <div className="platform-boxes">
@@ -879,56 +935,6 @@ function CalendarPage({ page, title, subtitle }) {
                       />
                     </div>
 
-                    <div className="field-block">
-                      <div className="mini-label">Nume fisier video</div>
-                      <input
-                        className="field"
-                        value={video.fileName || ""}
-                        onChange={(e) => updateVideoField(video.id, "fileName", e.target.value)}
-                        placeholder="video_27_anxios_01.mp4"
-                      />
-                    </div>
-
-                    <div className="field-block">
-                      <div className="mini-label">Link video</div>
-                      <input
-                        className="field"
-                        value={video.videoLink || ""}
-                        onChange={(e) => updateVideoField(video.id, "videoLink", e.target.value)}
-                        placeholder="link TikTok / Instagram"
-                      />
-                    </div>
-
-                    <div className="field-block">
-                      <div className="mini-label">Hook text (prima secunda)</div>
-                      <textarea
-                        className="field textarea"
-                        value={video.hookText || ""}
-                        onChange={(e) => updateVideoField(video.id, "hookText", e.target.value)}
-                        placeholder="textul exact din prima secunda"
-                      />
-                    </div>
-
-                    <div className="field-block">
-                      <div className="mini-label">Cadre</div>
-                      <textarea
-                        className="field textarea large"
-                        value={video.frames || ""}
-                        onChange={(e) => updateVideoField(video.id, "frames", e.target.value)}
-                        placeholder="VIDEO 1: ..."
-                      />
-                    </div>
-
-                    <div className="field-block">
-                      <div className="mini-label">Caption</div>
-                      <textarea
-                        className="field textarea"
-                        value={video.caption || ""}
-                        onChange={(e) => updateVideoField(video.id, "caption", e.target.value)}
-                        placeholder="caption video"
-                      />
-                    </div>
-
                     <PlatformSection
                       platformLabel="Instagram"
                       accentClass="insta"
@@ -995,6 +1001,56 @@ function PlatformSection({
         >
           {data.posted ? "✓" : ""}
         </button>
+      </div>
+
+      <div className="field-block">
+        <div className="mini-label">Nume fisier video</div>
+        <input
+          className="field"
+          value={data.fileName || ""}
+          onChange={(e) => onChange("fileName", e.target.value)}
+          placeholder="video_27_platforma_01.mp4"
+        />
+      </div>
+
+      <div className="field-block">
+        <div className="mini-label">Link video</div>
+        <input
+          className="field"
+          value={data.videoLink || ""}
+          onChange={(e) => onChange("videoLink", e.target.value)}
+          placeholder="link TikTok / Instagram"
+        />
+      </div>
+
+      <div className="field-block">
+        <div className="mini-label">Hook text (prima secunda)</div>
+        <textarea
+          className="field textarea"
+          value={data.hookText || ""}
+          onChange={(e) => onChange("hookText", e.target.value)}
+          placeholder="textul exact din prima secunda"
+        />
+      </div>
+
+      <div className="field-block">
+        <div className="mini-label">Cadre</div>
+        <textarea
+          className="field textarea large"
+          value={data.frames || ""}
+          onChange={(e) => onChange("frames", e.target.value)}
+          placeholder="cadre platforma"
+        />
+      </div>
+
+      <div className="field-block">
+        <div className="mini-label">Caption</div>
+        <textarea
+          className="field textarea"
+          value={data.caption || ""}
+          onChange={(e) => onChange("caption", e.target.value)}
+          placeholder="caption platforma"
+        />
       </div>
 
       <div className="badges">
